@@ -23,7 +23,7 @@ with app.app_context():
     db.create_all()
     if not User.query.filter_by(email="admin@example.com").first():
         admin = User(name="Admin", email="admin@example.com", phone="0000000000", role="admin")
-        admin.set_password(os.getenv("ADMIN_PASSWORD", "admin123"))
+        admin.set_password(os.getenv("ADMIN_PASSWORD", "@unity#123"))
         db.session.add(admin)
     for title, slug, price, mins, loc, diff, desc, safety in SAMPLE:
         a = Activity.query.filter_by(slug=slug).first()
