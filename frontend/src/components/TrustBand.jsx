@@ -1,8 +1,8 @@
 const STATS = [
-  { n: "750+", l: "flying Hrs Experience" },
-  { n: "15+", l: "years experience" },
-  { n: "5400+", l: "Kilometers cross country flying experience" },
+  { n: "15+", l: "Years experience" },
+  { n: "805+", l: "Flying Hrs Experience" },
   { n: "1,500+", l: "Student Trained" },
+  { n: "5400+", l: "Kilometers cross country flying experience" },
 ];
 
 export default function TrustBand() {

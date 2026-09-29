@@ -11,8 +11,8 @@ export default function JoyRides() {
         </div>
       </Scene>
 
-      <section className="section">
-        <div className="detail">
+      <section className="section svc-section">
+  <div className="detail svc-page">
           <div className="detail-main">
             <div className="jr-title-row">
   <h2>Paramotor Joyride</h2>
@@ -89,13 +89,13 @@ export default function JoyRides() {
             <div className="jr-session">
               <h4 className="jr-session-heading jr-session-morning">Morning Session:</h4>
               <p className="jr-session-time">6:30 AM &ndash; 12:00 AM</p>
-              <p className="muted">Ideal for calm air conditions, crystal-clear visibility, and stunning morning photography.</p>
+              <p className="jr-session-desc">Ideal for calm air conditions, crystal-clear visibility, and stunning morning photography.</p>
             </div>
 
             <div className="jr-session">
               <h4 className="jr-session-heading jr-session-evening">Evening Session:</h4>
               <p className="jr-session-time">4:00 PM &ndash; 7:00 PM</p>
-              <p className="muted">Perfect for golden-hour flights, spectacular sunsets, and cool evening breezes.</p>
+              <p className="jr-session-desc">Perfect for golden-hour flights, spectacular sunsets, and cool evening breezes.</p>
             </div>
 
             <div className="jr-session">

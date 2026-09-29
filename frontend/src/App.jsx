@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar.jsx";
 import Scene from "./components/Scene.jsx";
 import Footer from "./components/Footer.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import ScrollToTop from "./components/ScrollToTop.jsx";
 import Home from "./pages/Home.jsx";
 import Activities from "./pages/Activities.jsx";
 import ActivityDetails from "./pages/ActivityDetails.jsx";
@@ -10,7 +11,7 @@ import Booking from "./pages/Booking.jsx";
 import Pay from "./pages/Pay.jsx";
 import About from "./pages/About.jsx";
 import Contact from "./pages/Contact.jsx";
-import Vision from "./pages/Vision.jsx";
+import Gallery from "./pages/Gallery.jsx";
 import Terms from "./pages/Terms.jsx";
 import JoyRides from "./pages/services/JoyRides.jsx";
 import Training from "./pages/services/Training.jsx";
@@ -28,6 +29,7 @@ import AdminCoupons from "./pages/admin/AdminCoupons.jsx";
 export default function App() {
   return (
     <>
+      <ScrollToTop />
       <Scene kind="sky" className="page-bg" />
       <Navbar />
       <main>
@@ -37,7 +39,7 @@ export default function App() {
           <Route path="/activities/:slug" element={<ActivityDetails />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/vision" element={<Vision />} />
+          <Route path="/gallery" element={<Gallery />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/services/joy-rides" element={<JoyRides />} />
           <Route path="/services/training" element={<Training />} />

@@ -185,16 +185,16 @@ function Subject({ kind, banner }) {
 
 export function sceneFor(slug, imageUrl) {
   const MAP = {
-    "paramotor-ride": { kind: "paramotor", photo: null },
-    winchgliding: { kind: "winchgliding", photo: null },
-    parasailing: { kind: "winchgliding", photo: null },
-    "atv-bike-ride": { kind: "atv", photo: null },
+    "paramotor-ride": { kind: "paramotor", photo: "/images/paramotor_ride.jpg", photoPosition: "center 15%" },
+    winchgliding: { kind: "winchgliding", photo: "/images/winchgliding.jpg", photoPosition: "center" },
+    parasailing: { kind: "winchgliding", photo: "/images/parasailing.jpg", photoPosition: "center" },
+    "atv-bike-ride": { kind: "atv", photo: null, photoPosition: "center" },
   };
-  const m = MAP[slug] || { kind: "mountains", photo: null };
-  return { kind: m.kind, photo: imageUrl || m.photo };
+  const m = MAP[slug] || { kind: "mountains", photo: null, photoPosition: "center" };
+  return { kind: m.kind, photo: imageUrl || m.photo, photoPosition: m.photoPosition || "center" };
 }
 
-export default function Scene({ kind = "hero", photo, className = "", banner = false, anchor = "mid", children }) {
+export default function Scene({ kind = "hero", photo, photoPosition = "center", className = "", banner = false, anchor = "mid", children }) {
   const uid = useId().replace(/:/g, "");
   const [c0, c1, c2] = SKY[kind] || SKY.hero;
   const sun = SUN[kind];
@@ -224,7 +224,7 @@ export default function Scene({ kind = "hero", photo, className = "", banner = f
         <Ridges kind={kind} />
         {kind === "atv" && <Atv x={banner ? 850 : 600} y={480} s={1.5} />}
       </svg>
-      {photo && <div className="scene-photo" style={{ backgroundImage: `url(${photo})` }} />}
+      {photo && <div className="scene-photo" style={{ backgroundImage: `url(${photo})`, backgroundPosition: photoPosition }} />}
       <div className="scene-shade" />
       {children && <div className="scene-content">{children}</div>}
     </div>

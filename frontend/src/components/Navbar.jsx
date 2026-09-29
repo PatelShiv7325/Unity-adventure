@@ -6,6 +6,8 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const canHover = () => window.matchMedia("(hover: hover)").matches;
 
   return (
     <header className="site-header">
@@ -21,17 +23,20 @@ export default function Navbar() {
 
       {/* Options bar */}
       <div className="nav-bar">
-        <div className="nav-bar-inner">
+        <div className={`nav-bar-inner${menuOpen ? " open" : ""}`}>
+          <button type="button" className="nav-toggle" aria-expanded={menuOpen} aria-label="Toggle menu" onClick={() => setMenuOpen((v) => !v)}>
+            {menuOpen ? "✕" : "☰"} <span>Menu</span>
+          </button>
           <span className="nav-spacer" aria-hidden="true" />
-          <nav className="nav-links">
+          <nav className="nav-links" onClick={(e) => { if (e.target.closest("a")) setMenuOpen(false); }}>
             <NavLink to="/" end>Home</NavLink>
             <NavLink to="/about">About</NavLink>
-            <NavLink to="/vision">Vision</NavLink>
+            <NavLink to="/gallery">Gallery</NavLink>
 
             <div
               className="nav-dropdown"
-              onMouseEnter={() => setServicesOpen(true)}
-              onMouseLeave={() => setServicesOpen(false)}
+              onMouseEnter={() => canHover() && setServicesOpen(true)}
+              onMouseLeave={() => canHover() && setServicesOpen(false)}
             >
               <button
                 type="button"
@@ -54,7 +59,7 @@ export default function Navbar() {
             {user && user.role === "admin" && <NavLink to="/admin">Admin</NavLink>}
             {user && <NavLink to="/dashboard">My bookings</NavLink>}
           </nav>
-          <div className="nav-auth">
+          <div className="nav-auth" onClick={() => setMenuOpen(false)}>
             {user ? (
               <button className="link-btn" onClick={() => { logout(); navigate("/"); }}>Log out</button>
             ) : (

@@ -13,12 +13,25 @@ const POINTS = [
 ];
 
 const STATS_TOP = [
-  { n: "5400+", l: "Adventure Courses", c: "gold" },
-  { n: "700+", l: "Expert Instructors", c: "orange" },
+  { n: "5400+", l: "Kilometers cross country flying experience", c: "gold" },
+  { n: "805+", l: "Flying Hrs Experience", c: "orange" },
 ];
 const STATS_BOTTOM = { n: "1500+", l: "Happy Students And Growing!", c: "green" };
 
 const BADGES = ["Safe Training", "Confident Flying", "Unforgettable Experiences"];
+
+const MEMBERSHIPS = [
+  { src: "/images/member-appi.png", name: "APPI Power" },
+  { src: "/images/member-aero-club.png", name: "Aero Club of India" },
+  { src: "/images/member-atoai.png", name: "ATOAI" },
+  { src: "/images/member-pai.png", name: "Paragliding Association of India" },
+];
+
+function MemberLogo({ src, name }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <span className="member-logo-fallback">{name}</span>;
+  return <img className="member-logo" src={src} alt={name} onError={() => setFailed(true)} />;
+}
 
 // Drop your own files at these paths (see instructions) - falls back to a
 // placeholder card automatically if the file isn't there yet.
@@ -83,8 +96,48 @@ export default function WhyChooseUs() {
           </div>
 
           <div className="why-us-photos">
-            {PHOTOS.map((src, i) => <Photo key={src} src={src} alt="Unity Adventure Sports" />)}
+            {PHOTOS.map((src) => <Photo key={src} src={src} alt="Unity Adventure Sports" />)}
           </div>
+        </div>
+      </div>
+
+      {/* Memberships + Foundation of Excellence */}
+      <div className="section foundation">
+        <div className="member-heading">
+          <span className="why-us-eyebrow">Proud Member Of</span>
+          <span className="member-heading-line" />
+        </div>
+
+        <div className="member-logos">
+          {MEMBERSHIPS.map((m) => (
+            <div key={m.name} className="member-tile">
+              <MemberLogo src={m.src} name={m.name} />
+            </div>
+          ))}
+        </div>
+
+        <div className="foundation-card">
+          <p className="foundation-text">
+            <strong>Amit Patel</strong> continuously strives to enhance his knowledge and expertise by
+            participating in nationally recognized training programs and certification courses. His
+            commitment to professional excellence is reflected in his pursuit of globally respected
+            qualifications offered by organizations such as <strong>APPI</strong> (Association of
+            Paramotor &amp; Paratrike Pilots and Instructors), <strong>Aero Club of India</strong>,{" "}
+            <strong>PAI</strong> (Paragliding Association of India) and other leading aviation and
+            adventure sports institutions. This dedication ensures that his training philosophy aligns
+            with international safety standards, modern teaching practices, highest levels of
+            professionalism, providing every student with a world-class learning experience.
+          </p>
+        </div>
+
+        <div className="foundation-panel">
+          <h3 className="foundation-title">The Foundation of Excellence</h3>
+          <p className="foundation-sub">
+            Unity Adventure Sports is not just a professional Ride and training center; it is a legacy
+            established on the principles of military discipline and unwavering safety protocols. Amit
+            Patel's vision has nurtured hundreds of pilots, fostering a culture of teamwork and
+            self-confidence.
+          </p>
         </div>
       </div>
 
