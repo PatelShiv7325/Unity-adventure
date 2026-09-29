@@ -9,7 +9,10 @@ import WhyChooseUs from "../components/WhyChooseUs.jsx";
 
 export default function Home() {
   const [activities, setActivities] = useState([]);
-  useEffect(() => { getActivities().then(setActivities).catch(() => {}); }, []);
+  const [loadError, setLoadError] = useState(false);
+  useEffect(() => {
+    getActivities().then(setActivities).catch(() => setLoadError(true));
+  }, []);
 
   return (
     <>
@@ -41,6 +44,7 @@ export default function Home() {
         <div className="section rides-content">
           <h2>Choose your ride</h2>
           <div className="grid">
+            {loadError && <p>Rides could not be loaded right now. Please refresh in a minute.</p>}
             {activities.map((a) => <ActivityCard key={a.id} activity={a} />)}
           </div>
         </div>
