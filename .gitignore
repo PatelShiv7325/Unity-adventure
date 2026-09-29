@@ -1,10 +1,9 @@
+venv/
+.venv/
 __pycache__/
 *.pyc
-.venv/
-venv/
 .env
 instance/
 *.db
 node_modules/
 dist/
-.DS_Store
