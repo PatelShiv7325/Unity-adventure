@@ -15,6 +15,10 @@ def create_app(config_class=Config):
     from .routes import register_blueprints
     register_blueprints(app)
 
+    @app.get("/")
+    def index():
+        return jsonify(service="Unity Adventure API", status="ok", health="/api/health", rides="/api/activities")
+
     @app.get("/api/health")
     def health():
         return jsonify(status="ok")
