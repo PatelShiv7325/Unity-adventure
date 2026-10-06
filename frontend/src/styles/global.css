@@ -718,8 +718,8 @@ input:focus { border-color: var(--alpine); }
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
-  height: 130px;
-  padding: 14px 22px;
+  height: 150px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -738,6 +738,9 @@ input:focus { border-color: var(--alpine); }
   height: 100%;
   object-fit: contain;
   object-position: center;
+  image-rendering: auto;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 .member-logo-fallback { font-weight: 800; margin: 0; color: var(--night); font-size: 0.95rem; text-align: center; }
 
