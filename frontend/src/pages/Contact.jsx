@@ -40,7 +40,7 @@ export default function Contact() {
             <h3>Follow</h3>
             <p className="contact-social">
               <span className="contact-icon instagram-icon">📷</span>
-              <a href="https://instagram.com/unityadventuresports" target="_blank" rel="noreferrer">@unityadventuresports</a>
+              <a href="https://instagram.com/unityadventuresports" target="_blank" rel="noreferrer">unityadventuresports</a>
             </p>
           </div>
           <div className="contact-card contact-card-location">
