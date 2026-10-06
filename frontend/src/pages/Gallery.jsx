@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Scene from "../components/Scene.jsx";
 
 /* ------------------------------------------------------------------
@@ -103,6 +104,27 @@ const Icon = {
       <path d="M16 16l4.5 4.5M11 8.5v5M8.5 11h5" />
     </svg>
   ),
+  play: (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+      <path d="M8 5.5v13a1 1 0 001.5.86l10.5-6.5a1 1 0 000-1.72L9.5 4.64A1 1 0 008 5.5z" />
+    </svg>
+  ),
+  pause: (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+      <rect x="6" y="5" width="4.2" height="14" rx="1.2" />
+      <rect x="13.8" y="5" width="4.2" height="14" rx="1.2" />
+    </svg>
+  ),
+  expand: (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+    </svg>
+  ),
+  shrink: (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+    </svg>
+  ),
   image: (
     <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="4" width="18" height="16" rx="3" />
@@ -179,17 +201,66 @@ function VideoCard({ video, index }) {
   );
 }
 
-/* ---------- full-screen viewer ---------- */
+/* ---------- animated slideshow viewer ---------- */
 
-function Lightbox({ items, index, onClose, onNav }) {
+const SLIDE_MS = 5000; // time each photo stays on screen in Play mode
+
+function Lightbox({ items, startIndex, autoplay, onClose }) {
+  const total = items.length;
+  const [cur, setCur] = useState(startIndex);
+  const [prev, setPrev] = useState(null); // outgoing slide (kept briefly so it can animate away)
+  const [dir, setDir] = useState(1); // 1 = moving forward, -1 = moving back
+  const [playing, setPlaying] = useState(autoplay);
+  const [isFs, setIsFs] = useState(false);
+
+  const curRef = useRef(startIndex);
+  const rootRef = useRef(null);
+  const stripRef = useRef(null);
   const touchX = useRef(null);
-  const item = items[index];
+  const canFs = typeof document !== "undefined" && !!document.fullscreenEnabled;
 
+  const go = useCallback(
+    (to, d) => {
+      const next = ((to % total) + total) % total;
+      if (next === curRef.current) return;
+      setPrev(curRef.current);
+      setDir(d);
+      curRef.current = next;
+      setCur(next);
+    },
+    [total]
+  );
+  const step = useCallback((d) => go(curRef.current + d, d), [go]);
+
+  const toggleFs = useCallback(() => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else rootRef.current?.requestFullscreen?.();
+  }, []);
+
+  // remove the outgoing slide once its exit animation has finished
+  useEffect(() => {
+    if (prev === null) return;
+    const t = setTimeout(() => setPrev(null), 950);
+    return () => clearTimeout(t);
+  }, [prev]);
+
+  // auto-advance while playing (restarts after every manual change)
+  useEffect(() => {
+    if (!playing || total < 2) return;
+    const t = setTimeout(() => step(1), SLIDE_MS);
+    return () => clearTimeout(t);
+  }, [playing, cur, step, total]);
+
+  // keyboard: arrows, space = play/pause, F = fullscreen, Esc = close
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onClose();
-      else if (e.key === "ArrowRight") onNav(1);
-      else if (e.key === "ArrowLeft") onNav(-1);
+      else if (e.key === "ArrowRight") step(1);
+      else if (e.key === "ArrowLeft") step(-1);
+      else if (e.key === " ") {
+        e.preventDefault();
+        setPlaying((p) => !p);
+      } else if (e.key === "f" || e.key === "F") toggleFs();
     };
     window.addEventListener("keydown", onKey);
     const prevOverflow = document.body.style.overflow;
@@ -197,19 +268,37 @@ function Lightbox({ items, index, onClose, onNav }) {
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
+      if (document.fullscreenElement) document.exitFullscreen?.();
     };
-  }, [onClose, onNav]);
+  }, [onClose, step, toggleFs]);
 
-  // preload the neighbouring photos so next/prev feels instant
   useEffect(() => {
-    [1, -1].forEach((d) => {
-      const n = items[(index + d + items.length) % items.length];
+    const onFs = () => setIsFs(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
+  // preload the photos around the current one so changes feel instant
+  useEffect(() => {
+    [1, 2, -1].forEach((d) => {
+      const n = items[(cur + d + total) % total];
       if (n) {
         const img = new Image();
         img.src = n.src;
       }
     });
-  }, [index, items]);
+  }, [cur, items, total]);
+
+  // keep the active thumbnail centred in the filmstrip
+  useEffect(() => {
+    const strip = stripRef.current;
+    const el = strip && strip.children[cur];
+    if (!strip || !el) return;
+    strip.scrollTo({
+      left: el.offsetLeft - strip.clientWidth / 2 + el.clientWidth / 2,
+      behavior: "smooth",
+    });
+  }, [cur]);
 
   const onTouchStart = (e) => {
     touchX.current = e.touches[0].clientX;
@@ -218,68 +307,143 @@ function Lightbox({ items, index, onClose, onNav }) {
     if (touchX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchX.current;
     touchX.current = null;
-    if (Math.abs(dx) > 50) onNav(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > 50) step(dx < 0 ? 1 : -1);
   };
 
+  const item = items[cur];
   if (!item) return null;
 
-  return (
+  const layers =
+    prev !== null
+      ? [
+          { i: prev, role: "out" },
+          { i: cur, role: "in" },
+        ]
+      : [{ i: cur, role: "in" }];
+  const way = dir > 0 ? "next" : "prev";
+  const pad = (n) => String(n).padStart(2, "0");
+
+  // Render on <body> (a "portal") so the slideshow sits above the sticky header
+  // instead of being trapped inside <main>'s stacking layer.
+  return createPortal(
     <div
-      className="lb"
+      ref={rootRef}
+      className="ss"
       role="dialog"
       aria-modal="true"
-      aria-label="Photo viewer"
-      onClick={onClose}
+      aria-label="Photo slideshow"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <button type="button" className="lb-btn lb-close" onClick={onClose} aria-label="Close">
-        {Icon.close}
-      </button>
-
-      {items.length > 1 && (
-        <>
-          <button
-            type="button"
-            className="lb-btn lb-prev"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNav(-1);
-            }}
-            aria-label="Previous photo"
-          >
-            {Icon.prev}
-          </button>
-          <button
-            type="button"
-            className="lb-btn lb-next"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNav(1);
-            }}
-            aria-label="Next photo"
-          >
-            {Icon.next}
-          </button>
-        </>
-      )}
-
-      <img
-        key={item.id}
-        className="lb-img"
-        src={item.src}
-        alt={`${item.category} - Unity Adventure Sports`}
-        onClick={(e) => e.stopPropagation()}
-        draggable={false}
-      />
-
-      <div className="lb-bar" onClick={(e) => e.stopPropagation()}>
-        <span>{item.category}</span>
-        <span>
-          {index + 1} / {items.length}
-        </span>
+      {/* blurred, colour-matched backdrop that cross-fades with every photo */}
+      <div className="ss-bgs" aria-hidden="true">
+        {layers.map(({ i, role }) => (
+          <div
+            key={items[i].id}
+            className={`ss-bg ss-bg-${role}`}
+            style={{ backgroundImage: `url("${items[i].src}")` }}
+          />
+        ))}
       </div>
-    </div>
+
+      <div className="ss-top">
+        <div className="ss-brand">
+          <span className="ss-brand-dot" />
+          <span className="ss-brand-name">Unity Adventure Sports</span>
+          <span className="ss-brand-cat">{item.category}</span>
+        </div>
+        <div className="ss-actions">
+          {total > 1 && (
+            <button
+              type="button"
+              className={`ss-btn ss-btn-play${playing ? " on" : ""}`}
+              onClick={() => setPlaying((p) => !p)}
+              aria-label={playing ? "Pause slideshow" : "Play slideshow"}
+              title={playing ? "Pause (Space)" : "Play (Space)"}
+            >
+              {playing ? Icon.pause : Icon.play}
+              <span className="ss-btn-text">{playing ? "Pause" : "Play"}</span>
+            </button>
+          )}
+          {canFs && (
+            <button
+              type="button"
+              className="ss-btn ss-btn-round"
+              onClick={toggleFs}
+              aria-label={isFs ? "Exit full screen" : "Full screen"}
+              title="Full screen (F)"
+            >
+              {isFs ? Icon.shrink : Icon.expand}
+            </button>
+          )}
+          <button type="button" className="ss-btn ss-btn-round" onClick={onClose} aria-label="Close" title="Close (Esc)">
+            {Icon.close}
+          </button>
+        </div>
+      </div>
+
+      <div
+        className="ss-stage"
+        onClick={(e) => {
+          if (e.target === e.currentTarget || e.target.classList.contains("ss-slide")) onClose();
+        }}
+      >
+        {layers.map(({ i, role }) => (
+          <div key={items[i].id} className={`ss-slide ss-${role}-${way}`}>
+            <img
+              className="ss-img"
+              src={items[i].src}
+              alt={`${items[i].category} - Unity Adventure Sports`}
+              draggable={false}
+            />
+          </div>
+        ))}
+
+        {total > 1 && (
+          <>
+            <button type="button" className="ss-nav ss-nav-prev" onClick={() => step(-1)} aria-label="Previous photo">
+              {Icon.prev}
+            </button>
+            <button type="button" className="ss-nav ss-nav-next" onClick={() => step(1)} aria-label="Next photo">
+              {Icon.next}
+            </button>
+          </>
+        )}
+      </div>
+
+      <div className="ss-bottom">
+        <div className="ss-count" aria-live="polite">
+          <b>{pad(cur + 1)}</b>
+          <span> / {pad(total)}</span>
+        </div>
+
+        <div className="ss-progress" aria-hidden="true">
+          <span
+            key={cur}
+            className={playing ? "run" : ""}
+            style={{ animationDuration: `${SLIDE_MS}ms` }}
+          />
+        </div>
+
+        {total > 1 && (
+          <div className="ss-strip" ref={stripRef}>
+            {items.map((p, i) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`ss-thumb${i === cur ? " active" : ""}`}
+                onClick={() => go(i, i > curRef.current ? 1 : -1)}
+                aria-label={`Show photo ${i + 1}`}
+                aria-current={i === cur}
+              >
+                <img src={p.src} alt="" loading="lazy" decoding="async" draggable={false} />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -287,7 +451,7 @@ function Lightbox({ items, index, onClose, onNav }) {
 
 export default function Gallery() {
   const [active, setActive] = useState("All");
-  const [open, setOpen] = useState(null); // index inside `shown`, or null
+  const [open, setOpen] = useState(null); // { index, autoplay } or null
 
   const shown = useMemo(
     () => (active === "All" ? PHOTOS : PHOTOS.filter((p) => p.category === active)),
@@ -298,10 +462,6 @@ export default function Gallery() {
     cat === "All" ? PHOTOS.length : PHOTOS.filter((p) => p.category === cat).length;
 
   const close = useCallback(() => setOpen(null), []);
-  const nav = useCallback(
-    (dir) => setOpen((i) => (i === null ? i : (i + dir + shown.length) % shown.length)),
-    [shown.length]
-  );
 
   return (
     <>
@@ -316,9 +476,21 @@ export default function Gallery() {
         <div className="g-head">
           <h2>Photos</h2>
           {PHOTOS.length > 0 && (
-            <span className="g-count">
-              {shown.length} {shown.length === 1 ? "photo" : "photos"}
-            </span>
+            <div className="g-head-right">
+              <span className="g-count">
+                {shown.length} {shown.length === 1 ? "photo" : "photos"}
+              </span>
+              {shown.length > 1 && (
+                <button
+                  type="button"
+                  className="g-play"
+                  onClick={() => setOpen({ index: 0, autoplay: true })}
+                >
+                  {Icon.play}
+                  Play slideshow
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -354,7 +526,12 @@ export default function Gallery() {
             {/* key= remounts the grid so the reveal animation replays on every filter change */}
             <div className="g-grid" key={active}>
               {shown.map((photo, i) => (
-                <PhotoTile key={photo.id} photo={photo} index={i} onOpen={setOpen} />
+                <PhotoTile
+                  key={photo.id}
+                  photo={photo}
+                  index={i}
+                  onOpen={(idx) => setOpen({ index: idx, autoplay: false })}
+                />
               ))}
             </div>
           </>
@@ -384,7 +561,15 @@ export default function Gallery() {
         )}
       </section>
 
-      {open !== null && <Lightbox items={shown} index={open} onClose={close} onNav={nav} />}
+      {open !== null && (
+        <Lightbox
+          key={`${active}-${open.autoplay}`}
+          items={shown}
+          startIndex={open.index}
+          autoplay={open.autoplay}
+          onClose={close}
+        />
+      )}
     </>
   );
 }
