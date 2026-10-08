@@ -13,6 +13,8 @@ export const deleteActivity = (id) => client.delete(`/admin/activities/${id}`).t
 export const getAllBookings = () => client.get("/admin/bookings").then((r) => r.data);
 export const updateBookingStatus = (id, status) =>
   client.patch(`/admin/bookings/${id}/status`, { status }).then((r) => r.data);
+export const approvePayment = (id) => client.patch(`/admin/bookings/${id}/approve-payment`).then((r) => r.data);
+export const rejectPayment = (id) => client.patch(`/admin/bookings/${id}/reject-payment`).then((r) => r.data);
 export const refundBooking = (id) => client.patch(`/admin/bookings/${id}/refund`).then((r) => r.data);
 
 // Users

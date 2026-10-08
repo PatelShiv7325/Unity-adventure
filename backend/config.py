@@ -25,6 +25,13 @@ class Config:
     WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
     WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN", "")
     UPI_ID = os.getenv("UPI_ID", "7984438055@ybl")
+    UPI_PAYEE_NAME = os.getenv("UPI_PAYEE_NAME", "Unity Adventure Sports")
+    # false (default): customer submits the UTR and you approve it in Admin > Bookings.
+    # true: confirm instantly with no check. Only for local testing - ignored when FLASK_ENV=production.
+    UPI_AUTO_CONFIRM = os.getenv("UPI_AUTO_CONFIRM", "false").lower() == "true"
+    IS_PRODUCTION = os.getenv("FLASK_ENV", "").lower() == "production"
+    # unpaid bookings release their seats after this many minutes
+    HOLD_MINUTES = int(os.getenv("HOLD_MINUTES", "30"))
     # Demo payments let you test the flow without Razorpay keys. Set to false in production.
     ALLOW_DEMO_PAYMENTS = os.getenv("ALLOW_DEMO_PAYMENTS", "true").lower() == "true"
     # SMTP for booking confirmation emails. Leave blank to skip sending email.

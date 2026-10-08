@@ -15,6 +15,9 @@ def create_app(config_class=Config):
     from .routes import register_blueprints
     register_blueprints(app)
 
+    from .services.schema_service import add_missing_columns
+    add_missing_columns(app, db)
+
     @app.get("/")
     def index():
         return jsonify(service="Unity Adventure API", status="ok", health="/api/health", rides="/api/activities")

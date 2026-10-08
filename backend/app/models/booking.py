@@ -27,7 +27,8 @@ class Booking(db.Model):
     participants = db.Column(db.Integer, default=1)
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     coupon_id = db.Column(db.Integer, db.ForeignKey("coupons.id"))
-    # pending | paid | failed | refund_pending | refunded
+    discount = db.Column(db.Numeric(10, 2), default=0)
+    # pending | verifying (UPI paid, waiting for admin check) | paid | failed | refund_pending | refunded
     payment_status = db.Column(db.String(20), default="pending")
     payment_ref = db.Column(db.String(120))
     # pending (waiting for payment) | confirmed | cancelled | completed
@@ -50,7 +51,10 @@ class Booking(db.Model):
                 "participants": self.participants, "amount": float(self.amount),
                 "payment_status": self.payment_status, "status": self.status,
                 "ticket_code": self.ticket_code,
-                "created_at": self.created_at.isoformat() if self.created_at else None}
+                "created_at": self.created_at.isoformat() if self.created_at else None,
+                "activity_slug": self.activity.slug,
+                "location": self.activity.location,
+                "discount": float(self.discount or 0)}
 
 
 class Payment(db.Model):
@@ -63,9 +67,20 @@ class Payment(db.Model):
     provider_payment_id = db.Column(db.String(120))
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     currency = db.Column(db.String(3), default="INR")
-    status = db.Column(db.String(20), default="created")         # created | paid | failed
+    status = db.Column(db.String(20), default="created")    
+    transaction_id = db.Column(db.String(120))
+    utr = db.Column(db.String(30), index=True)  
+    # created | paid | failed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     paid_at = db.Column(db.DateTime)
+
+    def release_seats(self):
+        """Give the seats back to the slot (call once when a booking is cancelled/expired)."""
+        if self.slot and self.status != "cancelled":
+            self.slot.booked = max(0, (self.slot.booked or 0) - (self.participants or 0))
+
+    def latest_payment(self):
+        return max(self.payments, key=lambda p: p.id, default=None)
 
     def to_dict(self):
         return {"id": self.id, "booking_id": self.booking_id, "provider": self.provider,

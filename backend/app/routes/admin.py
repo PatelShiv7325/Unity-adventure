@@ -4,6 +4,7 @@ from sqlalchemy import func
 from ..extensions import db
 from ..models import Activity, Booking, Payment, User, Coupon
 from ..utils.decorators import admin_required
+from ..services import payment_service as ps
 
 bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
@@ -26,8 +27,10 @@ def overview():
     ).scalar()
 
     pending_bookings = Booking.query.filter_by(status="pending").count()
+    payments_to_verify = Booking.query.filter_by(payment_status="verifying").count()
 
     return jsonify(
+        payments_to_verify=payments_to_verify,
         total_activities=total_activities,
         todays_bookings=todays_bookings,
         revenue_this_month=float(revenue_this_month),
@@ -92,7 +95,12 @@ def delete_activity(activity_id):
 @admin_required
 def all_bookings():
     rows = Booking.query.order_by(Booking.created_at.desc()).all()
-    return jsonify([{**b.to_dict(), "account_email": b.user.email} for b in rows])
+    out = []
+    for b in rows:
+        p = b.latest_payment()
+        out.append({**b.to_dict(), "account_email": b.user.email,
+                    "utr": p.utr if p else None, "pay_method": p.provider if p else None})
+    return jsonify(out)
 
 
 @bp.patch("/bookings/<int:booking_id>/status")
@@ -103,29 +111,50 @@ def update_booking_status(booking_id):
     status = d.get("status")
     if status not in ("pending", "confirmed", "cancelled", "completed"):
         return jsonify(error="Invalid status"), 400
+    if b.status == "cancelled" and status != "cancelled":
+        return jsonify(error="A cancelled booking cannot be re-opened. Ask the customer to book again."), 400
+    if status == "confirmed" and b.payment_status != "paid":
+        return jsonify(error="Verify the payment first (Approve payment) - a booking is confirmed only after it is paid"), 400
+    if status == "cancelled":
+        b.release_seats()
+        if b.payment_status in ("paid", "verifying"):
+            b.payment_status = "refund_pending"
     b.status = status
-    if status == "cancelled" and b.payment_status == "paid":
-        b.payment_status = "refund_pending"
     db.session.commit()
     return jsonify(b.to_dict())
 
 
-@bp.patch("/bookings/<int:booking_id>/refund")
+@bp.patch("/bookings/<int:booking_id>/approve-payment")
 @admin_required
-def refund_booking(booking_id):
+def approve_payment(booking_id):
+    """You checked your UPI/bank app and the money (with this UTR) is there -> confirm + ticket unlocks."""
     b = Booking.query.get_or_404(booking_id)
-    if b.payment_status not in ("paid", "refund_pending"):
-        return jsonify(error="Only paid bookings can be refunded"), 400
-    b.payment_status = "refunded"
-    b.status = "cancelled"
-    db.session.commit()
+    if b.status == "cancelled":
+        return jsonify(error="This booking is cancelled"), 400
+    if b.payment_status == "paid":
+        return jsonify(error="Already paid"), 400
+    p = (Payment.query.filter_by(booking_id=b.id, provider="upi", status="verifying")
+         .order_by(Payment.id.desc()).first())
+    if not p:
+        return jsonify(error="No UPI payment is waiting for verification on this booking"), 400
+    ps.mark_paid(db, b, p, p.utr or f"upi_{b.id}")
     return jsonify(b.to_dict())
 
 
-@bp.get("/payments")
+@bp.patch("/bookings/<int:booking_id>/reject-payment")
 @admin_required
-def all_payments():
-    return jsonify([p.to_dict() for p in Payment.query.order_by(Payment.created_at.desc()).all()])
+def reject_payment(booking_id):
+    """Money not found -> the customer can try again."""
+    b = Booking.query.get_or_404(booking_id)
+    p = (Payment.query.filter_by(booking_id=b.id, provider="upi", status="verifying")
+         .order_by(Payment.id.desc()).first())
+    if not p:
+        return jsonify(error="No UPI payment is waiting for verification on this booking"), 400
+    p.status = "failed"
+    b.payment_status = "failed"
+    b.payment_ref = None
+    db.session.commit()
+    return jsonify(b.to_dict())
 
 
 # ---------- Users ----------
@@ -165,11 +194,15 @@ def revenue():
     )
     by_activity = [{"activity": title, "revenue": float(amt)} for title, amt in by_activity_rows]
 
+    if db.engine.dialect.name == "sqlite":
+        month = func.strftime("%Y-%m", Booking.created_at)
+    else:
+        month = func.to_char(Booking.created_at, "YYYY-MM")  # Postgres / Neon
     by_month_rows = (
-        db.session.query(func.strftime("%Y-%m", Booking.created_at), func.coalesce(func.sum(Booking.amount), 0))
+        db.session.query(month, func.coalesce(func.sum(Booking.amount), 0))
         .filter(Booking.payment_status == "paid")
-        .group_by(func.strftime("%Y-%m", Booking.created_at))
-        .order_by(func.strftime("%Y-%m", Booking.created_at))
+        .group_by(month)
+        .order_by(month)
         .all()
     )
     by_month = [{"month": m, "revenue": float(amt)} for m, amt in by_month_rows]

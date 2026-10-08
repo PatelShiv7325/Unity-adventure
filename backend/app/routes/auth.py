@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from ..extensions import db
 from ..models import User
-from ..utils.validators import require_fields
+from ..utils.validators import require_fields, valid_email, clean_phone
 
 bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -13,9 +13,16 @@ def register():
     missing = require_fields(data, ["name", "email", "password"])
     if missing:
         return jsonify(error=f"Missing: {', '.join(missing)}"), 400
-    if User.query.filter_by(email=data["email"].lower()).first():
+    if not valid_email(data["email"]):
+        return jsonify(error="Enter a valid email address"), 400
+    if len(data["password"]) < 6:
+        return jsonify(error="Password must be at least 6 characters"), 400
+    if data.get("phone") and not clean_phone(data["phone"]):
+        return jsonify(error="Enter a valid phone number (10 digits)"), 400
+    if User.query.filter_by(email=data["email"].strip().lower()).first():
         return jsonify(error="Email already registered"), 409
-    user = User(name=data["name"], email=data["email"].lower(), phone=data.get("phone"))
+    user = User(name=data["name"].strip(), email=data["email"].strip().lower(),
+                phone=clean_phone(data.get("phone")) if data.get("phone") else None)
     user.set_password(data["password"])
     db.session.add(user)
     db.session.commit()
