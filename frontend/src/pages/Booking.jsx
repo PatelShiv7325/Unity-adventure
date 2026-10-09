@@ -118,7 +118,7 @@ export default function Booking() {
               ))}
             </div>
             <label className="inline-label">Or pick another date
-              <input type="date" min={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
+              <input type="date" min={todayISO()} max={addDaysISO(30)} value={date} onChange={(e) => setDate(e.target.value)} />
             </label>
           </div>
 

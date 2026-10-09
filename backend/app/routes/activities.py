@@ -22,6 +22,7 @@ def get_activity(slug):
 def get_slots(slug):
     a = Activity.query.filter_by(slug=slug, is_active=True).first_or_404()
     booking_service.expire_stale_holds()
+    booking_service.ensure_slots(a)
     q = Slot.query.filter(Slot.activity_id == a.id, Slot.slot_date >= date.today())
     if request.args.get("date"):
         try:
