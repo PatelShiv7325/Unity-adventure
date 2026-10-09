@@ -45,7 +45,7 @@ def apply_coupon(amount, coupon):
 
 # Daily flying slots. Change these times / seats if your schedule changes.
 SLOT_TIMES = (time(7, 0), time(9, 0), time(16, 30), time(18, 0))
-SLOT_CAPACITY = 4
+SLOT_CAPACITY = 10
 SLOT_DAYS_AHEAD = 30
 
 
@@ -60,6 +60,11 @@ def ensure_slots(activity, days_ahead=SLOT_DAYS_AHEAD):
     have = {(s.slot_date, s.start_time) for s in
             Slot.query.filter(Slot.activity_id == activity.id,
                               Slot.slot_date >= today, Slot.slot_date <= last).all()}
+
+    # raise seats on slots that were created earlier with a smaller limit (bookings are kept)
+    Slot.query.filter(Slot.activity_id == activity.id, Slot.slot_date >= today,
+                      Slot.capacity < SLOT_CAPACITY).update({"capacity": SLOT_CAPACITY})
+
     added = 0
     for d in range(0, days_ahead + 1):
         day = today + timedelta(days=d)
@@ -68,9 +73,8 @@ def ensure_slots(activity, days_ahead=SLOT_DAYS_AHEAD):
                 db.session.add(Slot(activity_id=activity.id, slot_date=day, start_time=t,
                                     capacity=SLOT_CAPACITY, booked=0))
                 added += 1
-    if added:
-        try:
-            db.session.commit()
-        except IntegrityError:  # two visitors at the same moment - the other one created them
-            db.session.rollback()
+    try:
+        db.session.commit()
+    except IntegrityError:  # two visitors at the same moment - the other one created them
+        db.session.rollback()
     return added

@@ -42,6 +42,6 @@ with app.app_context():
         for d in range(1, 8):
             for t in (time(7, 0), time(9, 0), time(16, 30), time(18, 0)):
                 db.session.add(Slot(activity_id=a.id, slot_date=date.today() + timedelta(days=d),
-                                    start_time=t, capacity=4))
+                                    start_time=t, capacity=10))
     db.session.commit()
-    print("Seeded. Admin login: admin@example.com / admin123 (change it!)")
+    print("Seeded. Admin login: admin@example.com / (your ADMIN_PASSWORD, default @unity#123) - change it!")
