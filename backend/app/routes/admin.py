@@ -156,6 +156,24 @@ def reject_payment(booking_id):
     db.session.commit()
     return jsonify(b.to_dict())
 
+@bp.patch("/bookings/<int:booking_id>/refund")
+@admin_required
+def refund_booking(booking_id):
+    b = Booking.query.get_or_404(booking_id)
+    if b.payment_status not in ("paid", "refund_pending"):
+        return jsonify(error="Only paid bookings can be refunded"), 400
+    b.release_seats()
+    b.payment_status = "refunded"
+    b.status = "cancelled"
+    db.session.commit()
+    return jsonify(b.to_dict())
+
+
+@bp.get("/payments")
+@admin_required
+def all_payments():
+    return jsonify([p.to_dict() for p in Payment.query.order_by(Payment.created_at.desc()).all()])
+
 
 # ---------- Users ----------
 @bp.get("/users")

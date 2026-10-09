@@ -6,9 +6,11 @@ import ActivityCard from "../components/ActivityCard.jsx";
 import Scene from "../components/Scene.jsx";
 import TrustBand from "../components/TrustBand.jsx";
 import WhyChooseUs from "../components/WhyChooseUs.jsx";
+import Reveal from "../components/Reveal.jsx";
+import { CardSkeletons } from "../components/Skeleton.jsx";
 
 export default function Home() {
-  const [activities, setActivities] = useState([]);
+  const [activities, setActivities] = useState(null);
   const [loadError, setLoadError] = useState(false);
   useEffect(() => {
     getActivities().then(setActivities).catch(() => setLoadError(true));
@@ -17,48 +19,44 @@ export default function Home() {
   return (
     <>
       <section className="hero hero-video">
-  <video
-  className="hero-video-bg"
-  src="/videos/hero.mp4"
-  autoPlay
-  muted
-  loop
-  playsInline
-/>
-  <div className="hero-video-shade" aria-hidden="true" />
-  <div className="hero-inner">
-    <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-      <h1>Experience the sky like never before.</h1>
-      <div className="hero-actions">
-        <Link className="btn btn-lg" to="/activities">See all rides</Link>
-        <Link className="btn btn-ghost btn-lg" to="/about">Meet your instructor</Link>
-      </div>
-    </motion.div>
-  </div>
-</section>
+        <video className="hero-video-bg" src="/videos/hero.mp4" autoPlay muted loop playsInline />
+        <div className="hero-video-shade" aria-hidden="true" />
+        <div className="hero-inner">
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+            <h1>Experience the sky like never before.</h1>
+            <div className="hero-actions">
+              <Link className="btn btn-lg" to="/activities">See all rides</Link>
+              <Link className="btn btn-ghost btn-lg" to="/about">Meet your instructor</Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
 
       <TrustBand />
 
       <section className="rides-section">
         <Scene kind="mountains" className="rides-bg" />
         <div className="section rides-content">
-          <h2>Choose your ride</h2>
+          <Reveal><h2>Choose your ride</h2></Reveal>
+          {loadError && <p className="notice notice-error">Rides could not be loaded right now. Please refresh in a minute.</p>}
+          {!activities && !loadError && <CardSkeletons />}
           <div className="grid">
-            {loadError && <p>Rides could not be loaded right now. Please refresh in a minute.</p>}
-            {activities.map((a) => <ActivityCard key={a.id} activity={a} />)}
+            {activities?.map((a, i) => <Reveal key={a.id} delay={i * 0.08}><ActivityCard activity={a} /></Reveal>)}
           </div>
         </div>
       </section>
- 
+
       <WhyChooseUs />
 
       <section className="section">
-        <h2>From the ground to the sky in three steps</h2>
-        <ol className="steps">
-          <li><h3>Pick a ride</h3><p>Paramotor, winchgliding or parasailing. Check the price and difficulty first.</p></li>
-          <li><h3>Choose a slot</h3><p>Select a date and time, then tell us who is flying.</p></li>
-          <li><h3>Pay and show your ticket</h3><p>Pay online, then arrive at the launch point with your ticket code.</p></li>
-        </ol>
+        <Reveal><h2>From the ground to the sky in three steps</h2></Reveal>
+        <Reveal delay={0.1}>
+          <ol className="steps">
+            <li><h3>Pick a ride</h3><p>Paramotor, winchgliding or parasailing. Check the price and difficulty first.</p></li>
+            <li><h3>Choose a slot</h3><p>Select a date and time, then tell us who is flying.</p></li>
+            <li><h3>Pay and download your ticket</h3><p>Pay online, then arrive at the launch point with your ticket code.</p></li>
+          </ol>
+        </Reveal>
       </section>
 
       <Scene kind="paramotor" className="band" banner>

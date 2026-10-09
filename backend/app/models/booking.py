@@ -41,6 +41,14 @@ class Booking(db.Model):
     slot = db.relationship("Slot")
     payments = db.relationship("Payment", backref="booking", lazy=True)
 
+    def release_seats(self):
+        """Give the seats back to the slot (call once when a booking is cancelled/expired)."""
+        if self.slot and self.status != "cancelled":
+            self.slot.booked = max(0, (self.slot.booked or 0) - (self.participants or 0))
+
+    def latest_payment(self):
+        return max(self.payments, key=lambda p: p.id, default=None)
+
     def to_dict(self):
         return {"id": self.id, "activity": self.activity.title,
                 "date": self.slot.slot_date.isoformat(),

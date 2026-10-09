@@ -17,6 +17,7 @@ import JoyRides from "./pages/services/JoyRides.jsx";
 import Training from "./pages/services/Training.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
+import NotFound from "./pages/NotFound.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminOverview from "./pages/admin/AdminOverview.jsx";
@@ -29,10 +30,11 @@ import AdminCoupons from "./pages/admin/AdminCoupons.jsx";
 export default function App() {
   return (
     <>
+      <a href="#main" className="skip-link">Skip to content</a>
       <ScrollToTop />
       <Scene kind="sky" className="page-bg" />
       <Navbar />
-      <main>
+      <main id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/activities" element={<Activities />} />
@@ -56,6 +58,7 @@ export default function App() {
             <Route path="revenue" element={<AdminRevenue />} />
             <Route path="coupons" element={<AdminCoupons />} />
           </Route>
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
       <Footer />

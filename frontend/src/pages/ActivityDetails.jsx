@@ -3,12 +3,16 @@ import { Link, useParams } from "react-router-dom";
 import { getActivity } from "../api/activities";
 import { Difficulty } from "../components/ActivityCard.jsx";
 import Scene, { sceneFor } from "../components/Scene.jsx";
+import { Skeleton } from "../components/Skeleton.jsx";
+import { rupees } from "../utils/format";
 
 export default function ActivityDetails() {
   const { slug } = useParams();
   const [a, setA] = useState(null);
-  useEffect(() => { getActivity(slug).then(setA).catch(() => {}); }, [slug]);
-  if (!a) return <section className="section"><p>Loading...</p></section>;
+  const [missing, setMissing] = useState(false);
+  useEffect(() => { setA(null); setMissing(false); getActivity(slug).then(setA).catch(() => setMissing(true)); }, [slug]);
+  if (missing) return <section className="section narrow center"><h1>Ride not found</h1><p className="muted">This ride is not available right now.</p><Link className="btn" to="/activities">See all rides</Link></section>;
+  if (!a) return <section className="section"><Skeleton h={300} r={14} style={{ marginBottom: 24 }} /><Skeleton h={200} r={14} /></section>;
 
   const { kind, photo } = sceneFor(a.slug, a.image_url);
   return (
@@ -25,10 +29,9 @@ export default function ActivityDetails() {
           <p>{a.description}</p>
           <h2>Safety</h2>
           <p>{a.safety_notes}</p>
-          {/* TODO: photo gallery, FAQs, Google Map, live weather, reviews */}
         </div>
         <aside className="detail-side">
-          <p className="price"><small>from</small> &#8377;{a.price}</p>
+          <p className="price"><small>from</small> {rupees(a.price)}</p>
           <p className="muted">per person</p>
           <Difficulty level={a.difficulty} />
           <p className="muted">{a.duration_minutes} minutes in the air or on the trail</p>
