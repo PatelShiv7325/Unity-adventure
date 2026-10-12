@@ -10,7 +10,12 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    cors.init_app(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
+    origins = list(app.config["CORS_ORIGINS"])
+    if not app.config.get("IS_PRODUCTION"):
+        # While developing: allow localhost on ANY port (5173, 5174...) and your phone on the same
+        # Wi-Fi (192.168.x.x / 10.x.x.x). Production only allows what CORS_ORIGINS lists.
+        origins.append(r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?")
+    cors.init_app(app, resources={r"/api/*": {"origins": origins}})
 
     from .routes import register_blueprints
     register_blueprints(app)
