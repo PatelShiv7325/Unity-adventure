@@ -10,13 +10,16 @@ app = create_app()
 SAMPLE = [
     ("Paramotor Ride", "paramotor-ride", 1999, 7, "Ralej(coastal), Khambhat", "Medium",
      "Powered winchgliding with an ex-Indian Army instructor. Fly Smart (5-7 min, Rs.1,999) or Fly High (7-9 min, Rs.2,499) - choose your package when booking.",
-     "Flown in tandem with a certified pilot who takes off and lands the aircraft. Dual-reserve parachute system. Digital wind monitoring before every launch. Minimum weight 15 kg, maximum 100 kg. No age restriction; minors need guardian consent."),
+     "Flown in tandem with a certified pilot who takes off and lands the aircraft. Dual-reserve parachute system. Digital wind monitoring before every launch. Minimum weight 15 kg, maximum 100 kg. No age restriction; minors need guardian consent.",
+     "/images/paramotor_ride.jpg"),
     ("Winchgliding", "winchgliding", 2499, 15, "Ralej(coastal), Khambhat", "Medium",
      "Free flight above the coastline in tandem with a certified winchgliding instructor.",
-     "Certified equipment, pre-flight briefing, and flights conducted only within safe wind and weather limits."),
+     "Certified equipment, pre-flight briefing, and flights conducted only within safe wind and weather limits.",
+     "/images/winchgliding.jpg"),
     ("Parasailing", "parasailing", 999, 10, "Ralej(coastal), Khambhat", "Easy",
      "An aerial adventure over the coast, suited to first-time flyers and families.",
-     "Life jacket and harness provided. Briefing given before every flight."),
+     "Life jacket and harness provided. Briefing given before every flight.",
+     "/images/parasailing.jpg"),
 ]
 
 with app.app_context():
@@ -25,7 +28,7 @@ with app.app_context():
         admin = User(name="Admin", email="admin@example.com", phone="0000000000", role="admin")
         admin.set_password(os.getenv("ADMIN_PASSWORD", "@unity#123"))
         db.session.add(admin)
-    for title, slug, price, mins, loc, diff, desc, safety in SAMPLE:
+    for title, slug, price, mins, loc, diff, desc, safety, image in SAMPLE:
         a = Activity.query.filter_by(slug=slug).first()
         if a:
             a.price = price
@@ -34,9 +37,10 @@ with app.app_context():
             a.difficulty = diff
             a.description = desc
             a.safety_notes = safety
+            a.image_url = image
             continue
         a = Activity(title=title, slug=slug, price=price, duration_minutes=mins,
-                     location=loc, difficulty=diff, description=desc, safety_notes=safety)
+                     location=loc, difficulty=diff, description=desc, safety_notes=safety, image_url=image)
         db.session.add(a)
         db.session.flush()
         for d in range(1, 8):

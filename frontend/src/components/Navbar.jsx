@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -8,6 +8,17 @@ export default function Navbar() {
   const [servicesOpen, setServicesOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const canHover = () => window.matchMedia("(hover: hover)").matches;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.nav-dropdown')) {
+        setServicesOpen(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   return (
     <header className="site-header">
@@ -41,15 +52,18 @@ export default function Navbar() {
               <button
                 type="button"
                 className="nav-dropdown-trigger"
-                onClick={() => setServicesOpen((v) => !v)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setServicesOpen((v) => !v);
+                }}
                 aria-expanded={servicesOpen}
               >
                 Our Services <span className="caret">▾</span>
               </button>
               {servicesOpen && (
                 <div className="dropdown-menu">
-                  <NavLink to="/services/joy-rides" onClick={() => setServicesOpen(false)}>Joy Rides</NavLink>
-                  <NavLink to="/services/training" onClick={() => setServicesOpen(false)}>Training</NavLink>
+                  <NavLink to="/services/joy-rides" onClick={() => { setServicesOpen(false); setMenuOpen(false); }}>Joy Rides</NavLink>
+                  <NavLink to="/services/training" onClick={() => { setServicesOpen(false); setMenuOpen(false); }}>Training</NavLink>
                 </div>
               )}
             </div>

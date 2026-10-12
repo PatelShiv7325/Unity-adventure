@@ -74,6 +74,11 @@ main > * { animation: rise 0.45s var(--ease) both; }
 /* ---------- Page headings ---------- */
 .page-title { font-size: clamp(2.2rem, 4.4vw, 3.2rem); margin: 6px 0 20px; }
 .page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+@media (max-width: 640px) {
+  .page-title { font-size: 1.8rem; }
+  .page-head { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .page-head .btn { width: 100%; }
+}
 
 /* ---------- Stepper ---------- */
 .stepper { display: flex; gap: 0; list-style: none; margin: 0 0 8px; padding: 0; max-width: 560px; }
@@ -99,9 +104,13 @@ main > * { animation: rise 0.45s var(--ease) both; }
 .form-grid label:last-child { grid-column: 1 / -1; }
 .inline-label { max-width: 260px; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
-.chip { font: 600 0.95rem var(--body); padding: 9px 16px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; color: var(--night); cursor: pointer; transition: all 0.15s; }
+.chip { font: 600 0.95rem var(--body); padding: 10px 18px; border-radius: 999px; border: 1.5px solid var(--line); background: #fff; color: var(--night); cursor: pointer; transition: all 0.15s; min-height: 44px; }
 .chip:hover { border-color: var(--canopy); }
 .chip.on { background: var(--night); border-color: var(--night); color: #fff; }
+@media (max-width: 640px) {
+  .chips { gap: 8px; }
+  .chip { padding: 10px 16px; font-size: 0.9rem; min-height: 42px; }
+}
 
 .slots { gap: 10px; }
 .slot { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 118px; padding: 10px 16px; border-radius: 14px; border: 1.5px solid var(--line); transition: all 0.18s var(--ease); }
@@ -111,6 +120,12 @@ main > * { animation: rise 0.45s var(--ease) both; }
 .slot.selected small { color: var(--night); }
 .slot-low { color: var(--bad) !important; font-weight: 600; }
 .slot.selected { box-shadow: 0 6px 16px rgba(255, 90, 31, 0.35); }
+@media (max-width: 640px) {
+  .slots { gap: 8px; }
+  .slot { min-width: 100px; padding: 12px 14px; }
+  .slot-time { font-size: 1rem; }
+  .slot small { font-size: 0.85rem; }
+}
 
 .stepper-input { display: inline-flex; align-items: center; margin-top: 6px; border: 1px solid var(--line); border-radius: 999px; background: #fff; overflow: hidden; }
 .stepper-input button { width: 44px; height: 44px; border: 0; background: none; font-size: 1.4rem; cursor: pointer; color: var(--night); }
@@ -136,6 +151,22 @@ main > * { animation: rise 0.45s var(--ease) both; }
 .summary-total { display: flex; justify-content: space-between; align-items: baseline; border-top: 2px dashed var(--line); padding-top: 12px; margin-top: 4px; font-weight: 600; }
 .summary-total strong { font: 800 2.4rem var(--display); color: var(--night); }
 @media (max-width: 940px) { .checkout { grid-template-columns: 1fr; } .summary { position: static; order: -1; } .summary-media { display: none; } .form-grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+  .checkout-wrap { padding: 0; }
+  .page-title { font-size: 1.8rem; }
+  .form-step h3 { font-size: 1.3rem; flex-direction: column; align-items: flex-start; gap: 8px; }
+  .form-step .num { width: 32px; height: 32px; font-size: 1rem; }
+  .panel { padding: 20px 16px; }
+  .summary { padding: 18px 16px; }
+  .summary-body h3 { font-size: 1.5rem; }
+  .summary-total strong { font-size: 2rem; }
+  .chips { gap: 8px; }
+  .chip { padding: 10px 16px; font-size: 0.9rem; min-height: 44px; }
+  .stepper-input button { width: 40px; height: 40px; font-size: 1.2rem; }
+  .stepper-input output { min-width: 40px; font-size: 1rem; }
+  .coupon-row { flex-direction: column; }
+  .coupon-row .btn { width: 100%; }
+}
 
 /* ---------- Payment ---------- */
 .hold-timer { margin: 0 0 14px; padding: 8px 14px; border-radius: 999px; display: inline-block; background: #fff6df; color: #7a5200; font-size: 0.95rem; }
@@ -199,6 +230,17 @@ main > * { animation: rise 0.45s var(--ease) both; }
 .booking-title { font: 700 1.6rem var(--display); }
 .booking-meta { display: flex; gap: 6px 18px; flex-wrap: wrap; font-size: 0.98rem; align-items: center; }
 .booking-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 640px) {
+  .booking-card { padding: 16px; gap: 14px; }
+  .booking-main { flex: 1 1 100%; min-width: 0; }
+  .booking-title { font-size: 1.3rem; }
+  .booking-meta { gap: 6px 12px; font-size: 0.9rem; }
+  .booking-actions { width: 100%; justify-content: flex-start; margin-top: 8px; }
+  .booking-actions .btn { flex: 1; min-width: 0; }
+  .page-head { margin-bottom: 16px; }
+  .chips { gap: 8px; }
+  .chips .chip { padding: 10px 16px; font-size: 0.9rem; min-height: 42px; }
+}
 .empty-state { text-align: center; background: rgba(255, 255, 255, 0.9); border: 1px dashed var(--line); border-radius: 16px; padding: 40px 20px; display: grid; gap: 8px; justify-items: center; }
 .empty-state h3 { margin: 0; color: var(--night); }
 
@@ -236,8 +278,13 @@ main > * { animation: rise 0.45s var(--ease) both; }
 .footer-col a { text-decoration: none; }
 .footer-col a:hover { color: var(--sun); }
 .footer-base { border-top: 1px solid rgba(255, 255, 255, 0.12); text-align: center; padding: 16px; }
-@media (max-width: 900px) { .footer-cols { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 560px) { .footer-cols { grid-template-columns: 1fr; } .panel { padding: 20px; } .booking-card { padding: 16px; } }
+@media (max-width: 900px) { .footer-cols { grid-template-columns: 1fr 1fr; gap: 24px; } }
+@media (max-width: 640px) {
+  .footer-cols { grid-template-columns: 1fr; gap: 20px; text-align: center; }
+  .footer-col { align-items: center; }
+  .footer-col strong { font-size: 1.1rem; }
+}
+@media (max-width: 560px) { .panel { padding: 20px; } .booking-card { padding: 16px; } }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

@@ -44,7 +44,7 @@ img, video, svg { max-width: 100%; }
   .site-header { position: static; }
   .nav-toggle {
     display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
-    background: none; border: 0; color: var(--night); cursor: pointer; padding: 12px 0;
+    background: none; border: 0; color: var(--night); cursor: pointer; padding: 14px 0;
     font: 700 1.15rem "Calibri", Arial, sans-serif; text-transform: uppercase; letter-spacing: 0.04em;
   }
   .nav-bar-inner { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0 16px 8px; }
@@ -52,12 +52,12 @@ img, video, svg { max-width: 100%; }
   .nav-links, .nav-auth { display: none; }
   .nav-bar-inner.open .nav-links { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
   .nav-bar-inner.open .nav-auth { display: flex; justify-content: center; padding: 12px 0 4px; }
-  .nav-links a, .nav-dropdown-trigger { margin: 0; padding: 13px 4px; border-top: 1px solid rgba(11, 27, 43, 0.22); text-align: center; }
-  .nav-links a.active { box-shadow: none; }
+  .nav-links a, .nav-dropdown-trigger { margin: 0; padding: 14px 8px; border-top: 1px solid rgba(11, 27, 43, 0.22); text-align: center; font-size: 1.05rem; }
+  .nav-links a.active { box-shadow: none; background: rgba(11, 27, 43, 0.08); }
   .nav-dropdown { margin: 0; }
   .nav-dropdown-trigger { width: 100%; justify-content: center; }
   .dropdown-menu { position: static; transform: none; box-shadow: none; border: 0; border-radius: 0; background: rgba(11, 27, 43, 0.14); padding: 0; min-width: 0; align-items: stretch; text-align: center; }
-  .dropdown-menu a { border-top: 1px solid rgba(11, 27, 43, 0.15); padding: 12px 16px !important; }
+  .dropdown-menu a { border-top: 1px solid rgba(11, 27, 43, 0.15); padding: 14px 16px !important; font-size: 1rem; }
 }
 
 @media (max-width: 900px) {
@@ -74,38 +74,41 @@ img, video, svg { max-width: 100%; }
 }
 
 @media (max-width: 640px) {
-  html { font-size: 100%; }
-  .section { padding: 36px 16px; }
-  .section.narrow { margin: 20px 12px; padding: 22px 18px; }
+  html { font-size: 95%; }
+  .section { padding: 32px 16px; }
+  .section.narrow { margin: 16px 12px; padding: 20px 16px; }
   .hero-inner, .banner-inner, .band-inner, .footer-body, .trust-inner { padding-left: 16px; padding-right: 16px; }
 
   /* header: wordmark only, smaller */
   .brand-icon { display: none; }
-  .logo-bar { padding: 10px 16px; min-height: 0; justify-content: center; }
-  .brand-logo img { height: 60px; }
+  .logo-bar { padding: 12px 16px; min-height: 0; justify-content: center; }
+  .brand-logo img { height: 56px; }
 
-  .hero { min-height: min(640px, 88vh); }
-  .band { padding: 56px 0; }
-  .banner { min-height: 220px; }
-  .banner-tall { min-height: 280px; }
+  .hero { min-height: min(600px, 85vh); }
+  .band { padding: 48px 0; }
+  .banner { min-height: 200px; }
+  .banner-tall { min-height: 260px; }
 
-  .btn { padding: 11px 22px; font-size: 1rem; }
-  .btn-lg { padding: 14px 26px; font-size: 1.1rem; }
-  .hero-actions { gap: 12px; }
+  .btn { padding: 12px 20px; font-size: 1rem; }
+  .btn-lg { padding: 14px 24px; font-size: 1.05rem; }
+  .hero-actions { gap: 10px; flex-direction: column; width: 100%; }
+  .hero-actions .btn { width: 100%; }
 
-  .card-media { height: 210px; }
-  .card-body { padding: 18px 18px 20px; }
-  .card-body h3 { font-size: 1.6rem; }
-  .card-body .muted { font-size: 1.02rem; }
-  .price { font-size: 1.9rem; }
+  .card-media { height: 200px; }
+  .card-body { padding: 16px 16px 18px; }
+  .card-body h3 { font-size: 1.5rem; }
+  .card-body .muted { font-size: 1rem; }
+  .price { font-size: 1.8rem; }
+  .card-foot { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .card-foot .btn { width: 100%; }
 
-  .detail-main { padding: 22px 18px; }
-  .detail-side { padding: 20px 18px; }
-  .steps li { padding-left: 68px; }
+  .detail-main { padding: 20px 16px; }
+  .detail-side { padding: 18px 16px; }
+  .steps li { padding-left: 64px; }
   .row { flex-direction: column; align-items: flex-start; }
-  .subnav { gap: 12px; }
+  .subnav { gap: 10px; }
 
-  .contact-card { padding: 26px 20px; }
+  .contact-card { padding: 24px 18px; }
   .contact-number-item, .contact-number-text { white-space: normal; }
   .contact-email a, .contact-social a { word-break: break-word; }
 
@@ -116,20 +119,25 @@ img, video, svg { max-width: 100%; }
   .why-us-banner { padding: 18px 16px; gap: 10px 24px; }
   .trust-inner strong { font-size: 2.3rem; }
   .trust-inner span { font-size: 1.05rem; }
-  .footer { margin-top: 90px; }
+  .footer { margin-top: 80px; }
   .g-filters { gap: 8px; }
-  .g-chip { padding: 8px 14px; font-size: 0.9rem; }
+  .g-chip { padding: 10px 16px; font-size: 0.9rem; }
 }
 
 @media (max-width: 480px) {
-  h1 { font-size: 2.3rem; }
-  h2 { font-size: 1.9rem; }
-  h3 { font-size: 1.5rem; }
-  .brand-logo img { height: 52px; }
-  .card-media { height: 190px; }
-  .qr-code { max-width: 210px; }
+  html { font-size: 90%; }
+  h1 { font-size: 2.1rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.4rem; }
+  .brand-logo img { height: 48px; }
+  .card-media { height: 180px; }
+  .card-body h3 { font-size: 1.4rem; }
+  .qr-code { max-width: 200px; }
   .payment-methods { gap: 12px; }
   .lb-bar { gap: 10px; padding: 8px 14px; font-size: 0.8rem; }
+  .section { padding: 28px 14px; }
+  .btn { padding: 11px 18px; font-size: 0.95rem; }
+  .hero h1 { font-size: clamp(2.5rem, 12vw, 3.5rem); }
 }
 
 /* touch tablets: no hover-only tricks */

@@ -17,7 +17,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=12)
-    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+    CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5174,http://localhost:5175").split(",")
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
     RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
     RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
