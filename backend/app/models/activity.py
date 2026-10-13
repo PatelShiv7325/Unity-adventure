@@ -16,7 +16,9 @@ class Activity(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     slots = db.relationship("Slot", backref="activity", lazy=True)
     def to_dict(self):
+        from ..services.booking_service import packages_for
         return {"id": self.id, "title": self.title, "slug": self.slug,
+                "packages": packages_for(self),
                 "description": self.description, "safety_notes": self.safety_notes,
                 "price": float(self.price), "duration_minutes": self.duration_minutes,
                 "location": self.location, "latitude": self.latitude,

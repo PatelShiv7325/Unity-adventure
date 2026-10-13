@@ -23,6 +23,7 @@ export default function Booking() {
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotId, setSlotId] = useState(null);
   const [people, setPeople] = useState(1);
+  const [pkgKey, setPkgKey] = useState("");
   const [name, setName] = useState(user?.name || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [coupon, setCoupon] = useState("");
@@ -31,8 +32,13 @@ export default function Booking() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    getActivity(slug).then(setActivity).catch(() => setLoadError("We could not find this ride."));
+    useEffect(() => {
+    getActivity(slug)
+      .then((a) => {
+        setActivity(a);
+        if (a.packages?.length) setPkgKey(a.packages[0].key); // first package is pre-selected
+      })
+      .catch(() => setLoadError("We could not find this ride."));
   }, [slug]);
 
   useEffect(() => {
@@ -44,13 +50,16 @@ export default function Booking() {
 
   const quickDates = useMemo(() => Array.from({ length: 7 }, (_, i) => addDaysISO(i)), []);
   const chosenSlot = slots.find((s) => s.id === slotId);
-  const subtotal = activity ? activity.price * people : 0;
+  const packages = activity?.packages || [];
+  const chosenPkg = packages.find((p) => p.key === pkgKey);
+  const unitPrice = chosenPkg ? chosenPkg.price : activity ? activity.price : 0;
+  const subtotal = unitPrice * people;
   const discount = couponInfo ? Math.round((subtotal * couponInfo.percent_off) / 100) : 0;
   const total = subtotal - discount;
   const maxPeople = Math.max(1, Math.min(MAX_PEOPLE, chosenSlot ? chosenSlot.available : MAX_PEOPLE));
 
   // coupon is tied to the amount, so clear it if people changes
-  useEffect(() => { setCouponInfo(null); setCouponMsg(""); }, [people]);
+  useEffect(() => { setCouponInfo(null); setCouponMsg(""); }, [people, pkgKey]);
 
   // picking a slot with fewer seats than the current group size must not leave an impossible number selected
   useEffect(() => {
@@ -83,6 +92,7 @@ export default function Booking() {
       const booking = await createBooking({
         slot_id: slotId,
         participants: Number(people),
+        package: pkgKey || undefined,
         customer_name: name.trim(),
         customer_phone: phone.trim(),
         coupon_code: couponInfo ? couponInfo.code : undefined,
@@ -113,6 +123,19 @@ export default function Booking() {
 
       <div className="checkout">
         <div className="panel">
+                    {packages.length > 0 && (
+            <div className="form-step">
+              <h3>Choose your package</h3>
+              <div className="chips">
+                {packages.map((p) => (
+                  <button key={p.key} type="button" className={`chip ${pkgKey === p.key ? "on" : ""}`} onClick={() => setPkgKey(p.key)}>
+                    {p.name} &middot; {rupees(p.price)}
+                  </button>
+                ))}
+              </div>
+              {chosenPkg && <p className="muted small">{chosenPkg.detail} per person.</p>}
+            </div>
+          )}
           <div className="form-step">
             <h3><span className="num">1</span> Choose a date</h3>
             <div className="chips">
@@ -174,10 +197,11 @@ export default function Booking() {
             <h3>{activity.title}</h3>
             <p className="muted">{activity.location}</p>
             <dl className="summary-list">
+              {chosenPkg && <div><dt>Package</dt><dd>{chosenPkg.name}</dd></div>}
               <div><dt>Date</dt><dd>{date ? prettyDate(date) : "—"}</dd></div>
               <div><dt>Time</dt><dd>{chosenSlot ? prettyTime(chosenSlot.time) : "—"}</dd></div>
               <div><dt>People</dt><dd>{people}</dd></div>
-              <div><dt>{rupees(activity.price)} &times; {people}</dt><dd>{rupees(subtotal)}</dd></div>
+              <div><dt>{rupees(unitPrice)} &times; {people}</dt><dd>{rupees(subtotal)}</dd></div>
               {discount > 0 && <div className="discount"><dt>Coupon ({couponInfo.code})</dt><dd>&minus; {rupees(discount)}</dd></div>}
             </dl>
             <div className="summary-total"><span>Total</span><strong>{rupees(total)}</strong></div>

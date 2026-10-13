@@ -29,3 +29,7 @@ export const getCoupons = () => client.get("/admin/coupons").then((r) => r.data)
 export const addCoupon = (payload) => client.post("/admin/coupons", payload).then((r) => r.data);
 export const updateCoupon = (id, payload) => client.put(`/admin/coupons/${id}`, payload).then((r) => r.data);
 export const deleteCoupon = (id) => client.delete(`/admin/coupons/${id}`).then((r) => r.data);
+
+// Staff check-in
+export const lookupTicket = (code) => client.get(`/admin/tickets/${encodeURIComponent(code)}`).then((r) => r.data);
+export const checkInTicket = (code) => client.post(`/admin/tickets/${encodeURIComponent(code)}/check-in`).then((r) => r.data);

@@ -40,6 +40,10 @@ class Booking(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     # when the unpaid seat hold ends (UTC). Extended while the customer is paying.
     hold_until = db.Column(db.DateTime)
+    # chosen ride package (e.g. "Fly Smart"); empty for rides without packages
+    package = db.Column(db.String(40))
+    # set when staff scan the ticket at the venue
+    checked_in_at = db.Column(db.DateTime)
 
     user = db.relationship("User")
     activity = db.relationship("Activity")
@@ -68,8 +72,19 @@ class Booking(db.Model):
         minutes = current_app.config.get("HOLD_MINUTES", 30)
         return (self.created_at or datetime.utcnow()) + timedelta(minutes=minutes)
 
+    def can_cancel_online(self):
+        from ..services import booking_service
+        if self.status in ("cancelled", "completed"):
+            return False
+        if self.payment_status in ("paid", "verifying"):
+            return booking_service.refund_window_open(self.slot)
+        return True
+
     def to_dict(self):
         return {"id": self.id, "activity": self.activity.title,
+                "package": self.package,
+                "can_cancel": self.can_cancel_online(),
+                "checked_in": bool(self.checked_in_at),
                 "date": self.slot.slot_date.isoformat(),
                 "time": self.slot.start_time.strftime("%H:%M"),
                 "customer_name": self.customer_name,

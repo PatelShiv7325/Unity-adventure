@@ -32,8 +32,9 @@ export default function Terms() {
 
         <h2>Cancellations and rescheduling</h2>
         <p>
-          Cancellations made with sufficient notice may be rescheduled or refunded as per the policy
-          communicated at booking. Rescheduling due to weather or safety is offered free of charge.
+          Paid bookings can be cancelled online for a full refund up to 24 hours before the flight.
+          Within 24 hours of the flight, please call us; refunds are not guaranteed. Refunds are processed
+          by our team after cancellation. Rescheduling due to weather or safety is offered free of charge.
         </p>
 
         <h2>Liability</h2>

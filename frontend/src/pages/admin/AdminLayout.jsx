@@ -11,6 +11,7 @@ export default function AdminLayout() {
         <NavLink to="/admin/users">Users</NavLink>
         <NavLink to="/admin/revenue">Revenue</NavLink>
         <NavLink to="/admin/coupons">Coupons</NavLink>
+        <NavLink to="/admin/checkin">Check-in</NavLink>
       </nav>
       <Outlet />
     </section>

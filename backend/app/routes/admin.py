@@ -307,3 +307,42 @@ def delete_coupon(coupon_id):
     db.session.delete(c)
     db.session.commit()
     return jsonify(deleted=True)
+
+# ---------- Staff check-in (scan the ticket QR / type the ticket code) ----------
+def _checkin_view(b):
+    problems = []
+    if b.status == "cancelled":
+        problems.append("This booking was cancelled")
+    elif b.payment_status != "paid":
+        problems.append("Payment is not confirmed")
+    if b.checked_in_at:
+        problems.append("Already checked in")
+    warning = None
+    if b.slot.slot_date != booking_service.today_local():
+        warning = "This ticket is for " + b.slot.slot_date.strftime("%d %b %Y") + ", not today"
+    return {**b.to_dict(), "valid": not problems, "problems": problems, "warning": warning,
+            "checked_in_at": b.checked_in_at.isoformat() + "Z" if b.checked_in_at else None}
+
+
+@bp.get("/tickets/<code>")
+@admin_required
+def lookup_ticket(code):
+    b = Booking.query.filter_by(ticket_code=code.strip().upper()).first()
+    if not b:
+        return jsonify(error="No booking found for this ticket code"), 404
+    return jsonify(_checkin_view(b))
+
+
+@bp.post("/tickets/<code>/check-in")
+@admin_required
+def check_in(code):
+    b = Booking.query.filter_by(ticket_code=code.strip().upper()).first()
+    if not b:
+        return jsonify(error="No booking found for this ticket code"), 404
+    view = _checkin_view(b)
+    if not view["valid"]:
+        return jsonify(error=view["problems"][0]), 400
+    b.checked_in_at = datetime.utcnow()
+    b.status = "completed"
+    db.session.commit()
+    return jsonify(_checkin_view(b))

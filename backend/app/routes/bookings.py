@@ -1,11 +1,11 @@
 import io
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db
 from ..models import Booking, Slot, User
 from ..utils.validators import require_fields, clean_phone, valid_email
 from ..services import ticket_service, booking_service
-
+from ..services.booking_service import packages_for
 bp = Blueprint("bookings", __name__, url_prefix="/api/bookings")
 
 MAX_PEOPLE = 10
@@ -49,10 +49,18 @@ def create_booking():
     if not booking_service.slot_is_open(slot):
         return jsonify(error="This time slot is closed. Please choose a later slot."), 400
 
-    coupon, problem = booking_service.find_coupon(data.get("coupon_code"))
+        coupon, problem = booking_service.find_coupon(data.get("coupon_code"))
     if problem:
         return jsonify(error=problem), 400
-    subtotal = slot.activity.price * people
+
+    package = None
+    unit_price = slot.activity.price
+    if booking_service.packages_for(slot.activity):
+        package = booking_service.find_package(slot.activity, str(data.get("package") or "").strip())
+        if not package:
+            return jsonify(error="Please choose a package"), 400
+        unit_price = package["price"]
+    subtotal = unit_price * people
     discount, total = booking_service.apply_coupon(subtotal, coupon)
 
     # Take the seats with one atomic UPDATE: two customers clicking at the same moment
@@ -65,6 +73,7 @@ def create_booking():
                       customer_name=name, customer_phone=phone,
                       customer_email=(email or user.email),
                       participants=people, amount=total, discount=discount,
+                      package=package["name"] if package else None,
                       coupon_id=coupon.id if coupon else None)
     booking_service.extend_hold(booking)
     db.session.add(booking)
@@ -125,8 +134,9 @@ def cancel(booking_id):
     if b.status == "completed":
         return jsonify(error="A completed ride cannot be cancelled"), 400
     paid_or_paying = b.payment_status in ("paid", "verifying")
-    if paid_or_paying and b.slot and booking_service.slot_start(b.slot) <= booking_service.now_local():
-        return jsonify(error="This ride time has already started, so it can no longer be cancelled online. "
+    if paid_or_paying and b.slot and not booking_service.refund_window_open(b.slot):
+        hours = current_app.config.get("REFUND_FREE_HOURS", 24)
+        return jsonify(error=f"Paid bookings can be cancelled online up to {hours} hours before the flight. "
                              "Please call +91 90814 24343."), 400
     b.release_seats()
     b.status = "cancelled"

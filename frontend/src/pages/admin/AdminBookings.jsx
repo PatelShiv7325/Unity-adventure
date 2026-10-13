@@ -64,8 +64,7 @@ export default function AdminBookings() {
               <tr key={b.id} className={b.payment_status === "verifying" ? "row-attention" : ""}>
                 <td>#{b.id}<div className="muted">{b.ticket_code}</div></td>
                 <td>{b.customer_name}<div className="muted">{b.customer_phone}</div></td>
-                <td>{b.activity}<div className="muted">{b.participants} person(s)</div></td>
-                <td>{prettyDate(b.date)}<div className="muted">{prettyTime(b.time)}</div></td>
+                <td>{b.activity}{b.package ? ` - ${b.package}` : ""}<div className="muted">{prettyDate(b.date)} {prettyTime(b.time)}</div></td>
                 <td>{rupees(b.amount)}</td>
                 <td>
                   <StatusPill value={b.payment_status} />

@@ -47,6 +47,31 @@ def expire_stale_holds():
         db.session.commit()
     return len(stale)
 
+# Ride packages. The price is always taken from here on the server, never from the browser.
+PACKAGES = {
+    "paramotor-ride": (
+        {"key": "fly-smart", "name": "Fly Smart", "price": 1999, "detail": "5-7 min flight"},
+        {"key": "fly-high", "name": "Fly High", "price": 2499, "detail": "7-9 min flight"},
+    ),
+}
+
+
+def packages_for(activity):
+    return list(PACKAGES.get(activity.slug, ()))
+
+
+def find_package(activity, key):
+    for p in PACKAGES.get(activity.slug, ()):
+        if p["key"] == key:
+            return p
+    return None
+
+
+def refund_window_open(slot):
+    """True while a paid booking can still be cancelled online (REFUND_FREE_HOURS before the flight)."""
+    hours = current_app.config.get("REFUND_FREE_HOURS", 24)
+    return slot_start(slot) - timedelta(hours=hours) > now_local()
+
 
 def extend_hold(booking):
     """A customer who has started paying keeps the seats for HOLD_MINUTES more.

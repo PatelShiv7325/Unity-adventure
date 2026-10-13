@@ -64,7 +64,7 @@ def generate_ticket_image(booking) -> bytes:
 
     slot = booking.slot
     rows = [
-        ("ACTIVITY", booking.activity.title),
+        ("ACTIVITY", booking.activity.title + (f" - {booking.package}" if booking.package else "")),
         ("DATE", slot.slot_date.strftime("%d %b %Y")),
         ("REPORTING TIME", slot.start_time.strftime("%I:%M %p").lstrip("0")),
         ("FLYER", booking.customer_name),

@@ -26,6 +26,7 @@ import AdminBookings from "./pages/admin/AdminBookings.jsx";
 import AdminUsers from "./pages/admin/AdminUsers.jsx";
 import AdminRevenue from "./pages/admin/AdminRevenue.jsx";
 import AdminCoupons from "./pages/admin/AdminCoupons.jsx";
+import AdminCheckin from "./pages/admin/AdminCheckin.jsx";
 
 export default function App() {
   return (
@@ -57,6 +58,7 @@ export default function App() {
             <Route path="users" element={<AdminUsers />} />
             <Route path="revenue" element={<AdminRevenue />} />
             <Route path="coupons" element={<AdminCoupons />} />
+            <Route path="checkin" element={<AdminCheckin />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

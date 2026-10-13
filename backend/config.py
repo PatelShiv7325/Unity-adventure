@@ -56,6 +56,8 @@ class Config:
     HOLD_MAX_MINUTES = int(os.getenv("HOLD_MAX_MINUTES", "180"))
     # no bookings for a slot that starts in less than this many minutes
     BOOKING_CUTOFF_MINUTES = int(os.getenv("BOOKING_CUTOFF_MINUTES", "60"))
+    # Paid bookings can be cancelled (and refunded) online only until this many hours before the flight.
+    REFUND_FREE_HOURS = int(os.getenv("REFUND_FREE_HOURS", "24"))
     # Demo payments let you test the flow WITHOUT paying (anyone can get a free ticket).
     # Off by default and always off in production.
     ALLOW_DEMO_PAYMENTS = _flag("ALLOW_DEMO_PAYMENTS") and not _IS_PRODUCTION

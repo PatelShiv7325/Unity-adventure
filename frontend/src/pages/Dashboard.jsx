@@ -86,7 +86,7 @@ export default function Dashboard() {
           <article key={b.id} className="booking-card">
             <div className="booking-main">
               <div className="booking-top">
-                <strong className="booking-title">{b.activity}</strong>
+                <strong className="booking-title">{b.activity}{b.package ? ` - ${b.package}` : ""}</strong>
                 <StatusPill value={b.status === "confirmed" || b.status === "completed" || b.status === "cancelled" ? b.status : b.payment_status === "verifying" ? "verifying" : "pending"} />
               </div>
               <div className="booking-meta">
@@ -110,8 +110,8 @@ export default function Dashboard() {
                   <button className="btn btn-small btn-outline" onClick={() => download(b)}>Download</button>
                 </>
               )}
-              {open && <button className="btn btn-small btn-outline btn-danger" onClick={() => setToCancel(b)}>Cancel</button>}
-            </div>
+              {open && b.can_cancel && <button className="btn btn-small btn-outline btn-danger" onClick={() => setToCancel(b)}>Cancel</button>}
+              {open && !b.can_cancel && <span className="muted small">Cancellation closed &middot; call +91 90814 24343</span>}            </div>
           </article>
         );
       })}
@@ -122,7 +122,7 @@ export default function Dashboard() {
           <>
             <p>{toCancel.activity} &middot; {prettyDate(toCancel.date)} at {prettyTime(toCancel.time)}</p>
             {toCancel.payment_status === "paid" || toCancel.payment_status === "verifying"
-              ? <p className="muted">You have already paid. Your refund will be processed by our team after cancellation.</p>
+              ? <p className="muted">You have already paid. Your refund will be processed by our team after cancellation. Paid bookings can be cancelled up to 24 hours before the flight.</p>
               : <p className="muted">Your held seats will be released.</p>}
             <div className="modal-actions">
               <button className="btn btn-outline" disabled={cancelling} onClick={() => setToCancel(null)}>Keep booking</button>
