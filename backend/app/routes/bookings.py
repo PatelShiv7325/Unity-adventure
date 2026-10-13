@@ -49,7 +49,7 @@ def create_booking():
     if not booking_service.slot_is_open(slot):
         return jsonify(error="This time slot is closed. Please choose a later slot."), 400
 
-        coupon, problem = booking_service.find_coupon(data.get("coupon_code"))
+    coupon, problem = booking_service.find_coupon(data.get("coupon_code"))
     if problem:
         return jsonify(error=problem), 400
 

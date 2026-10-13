@@ -93,6 +93,7 @@ class Booking(db.Model):
                 "participants": self.participants, "amount": float(self.amount),
                 "payment_status": self.payment_status, "status": self.status,
                 "ticket_code": self.ticket_code,
+                "payment_ref": self.payment_ref,
                 "created_at": self.created_at.isoformat() if self.created_at else None,
                 "activity_slug": self.activity.slug,
                 "location": self.activity.location,
