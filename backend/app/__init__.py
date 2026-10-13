@@ -10,15 +10,19 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    origins = list(app.config["CORS_ORIGINS"])
-    if not app.config.get("IS_PRODUCTION"):
-        # While developing: allow localhost on ANY port (5173, 5174...) and your phone on the same
-        # Wi-Fi (192.168.x.x / 10.x.x.x). Production only allows what CORS_ORIGINS lists.
-        origins.append(r"https?://(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+)(:\d+)?")
-    cors.init_app(app, resources={r"/api/*": {"origins": origins}})
+    cors.init_app(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}})
 
     from .routes import register_blueprints
     register_blueprints(app)
+
+    # First run on a brand-new database (e.g. a fresh Postgres on Render): create the tables.
+    # Safe to repeat - it only creates tables that are missing.
+    with app.app_context():
+        try:
+            from . import models  # noqa: F401  (make sure every model is registered)
+            db.create_all()
+        except Exception:  # two workers starting at once can race; the other one wins
+            app.logger.warning("create_all skipped", exc_info=True)
 
     from .services.schema_service import add_missing_columns
     add_missing_columns(app, db)
@@ -41,6 +45,10 @@ def create_app(config_class=Config):
     @app.errorhandler(404)
     def not_found(e):
         return jsonify(error="Not found"), 404
+
+    @app.errorhandler(405)
+    def method_not_allowed(e):
+        return jsonify(error="Method not allowed"), 405
 
     @app.errorhandler(500)
     def server_error(e):

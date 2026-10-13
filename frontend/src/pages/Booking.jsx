@@ -42,7 +42,7 @@ export default function Booking() {
     getSlots(slug, date).then(setSlots).catch(() => setSlots([])).finally(() => setSlotsLoading(false));
   }, [slug, date]);
 
-  const quickDates = useMemo(() => Array.from({ length: 7 }, (_, i) => addDaysISO(i + 1)), []);
+  const quickDates = useMemo(() => Array.from({ length: 7 }, (_, i) => addDaysISO(i)), []);
   const chosenSlot = slots.find((s) => s.id === slotId);
   const subtotal = activity ? activity.price * people : 0;
   const discount = couponInfo ? Math.round((subtotal * couponInfo.percent_off) / 100) : 0;
@@ -51,6 +51,11 @@ export default function Booking() {
 
   // coupon is tied to the amount, so clear it if people changes
   useEffect(() => { setCouponInfo(null); setCouponMsg(""); }, [people]);
+
+  // picking a slot with fewer seats than the current group size must not leave an impossible number selected
+  useEffect(() => {
+    if (chosenSlot && people > chosenSlot.available) setPeople(Math.max(1, chosenSlot.available));
+  }, [chosenSlot]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const applyCoupon = async () => {
     if (!coupon.trim()) return;
@@ -113,7 +118,7 @@ export default function Booking() {
             <div className="chips">
               {quickDates.map((d) => (
                 <button key={d} type="button" className={`chip ${date === d ? "on" : ""}`} onClick={() => setDate(d)}>
-                  {new Date(d + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
+                  {d === todayISO() ? "Today" : new Date(d + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
                 </button>
               ))}
             </div>
@@ -127,6 +132,7 @@ export default function Booking() {
             {!date && <p className="empty-note">Select a date first.</p>}
             {date && slotsLoading && <div className="slots">{[1, 2, 3, 4].map((i) => <Skeleton key={i} h={58} w={120} r={14} />)}</div>}
             {date && !slotsLoading && <SlotPicker slots={slots} selectedId={slotId} onSelect={setSlotId} />}
+            {date && date === todayISO() && <p className="muted small">Booking for today closes 1 hour before each flight.</p>}
           </div>
 
           <div className="form-step">

@@ -1,6 +1,9 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
+from flask import current_app
+from sqlalchemy import case
 from ..extensions import db
+from .activity import Slot
 
 
 class Coupon(db.Model):
@@ -35,6 +38,8 @@ class Booking(db.Model):
     status = db.Column(db.String(20), default="pending")
     ticket_code = db.Column(db.String(40), unique=True, default=lambda: uuid.uuid4().hex[:12].upper())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # when the unpaid seat hold ends (UTC). Extended while the customer is paying.
+    hold_until = db.Column(db.DateTime)
 
     user = db.relationship("User")
     activity = db.relationship("Activity")
@@ -42,12 +47,26 @@ class Booking(db.Model):
     payments = db.relationship("Payment", backref="booking", lazy=True)
 
     def release_seats(self):
-        """Give the seats back to the slot (call once when a booking is cancelled/expired)."""
-        if self.slot and self.status != "cancelled":
-            self.slot.booked = max(0, (self.slot.booked or 0) - (self.participants or 0))
+        """Give the seats back to the slot (call once when a booking is cancelled/expired).
+
+        Done as one atomic UPDATE so two requests at the same moment cannot lose a seat count."""
+        if self.slot_id and self.status != "cancelled":
+            n = self.participants or 0
+            Slot.query.filter(Slot.id == self.slot_id).update(
+                {Slot.booked: case((Slot.booked > n, Slot.booked - n), else_=0)},
+                synchronize_session=False)
+            if self.slot is not None:
+                db.session.expire(self.slot)
 
     def latest_payment(self):
         return max(self.payments, key=lambda p: p.id, default=None)
+
+    def hold_expires(self):
+        """UTC time at which the unpaid seat hold ends."""
+        if self.hold_until:
+            return self.hold_until
+        minutes = current_app.config.get("HOLD_MINUTES", 30)
+        return (self.created_at or datetime.utcnow()) + timedelta(minutes=minutes)
 
     def to_dict(self):
         return {"id": self.id, "activity": self.activity.title,
@@ -62,7 +81,8 @@ class Booking(db.Model):
                 "created_at": self.created_at.isoformat() if self.created_at else None,
                 "activity_slug": self.activity.slug,
                 "location": self.activity.location,
-                "discount": float(self.discount or 0)}
+                "discount": float(self.discount or 0),
+                "hold_expires_at": self.hold_expires().isoformat() + "Z"}
 
 
 class Payment(db.Model):
@@ -70,25 +90,17 @@ class Payment(db.Model):
     __tablename__ = "payments"
     id = db.Column(db.Integer, primary_key=True)
     booking_id = db.Column(db.Integer, db.ForeignKey("bookings.id"), nullable=False)
-    provider = db.Column(db.String(20), nullable=False)          # razorpay | demo
+    provider = db.Column(db.String(20), nullable=False)          # razorpay | upi | demo
     provider_order_id = db.Column(db.String(120), index=True)
     provider_payment_id = db.Column(db.String(120))
     amount = db.Column(db.Numeric(10, 2), nullable=False)
     currency = db.Column(db.String(3), default="INR")
-    status = db.Column(db.String(20), default="created")    
+    # created | verifying (UPI, waiting for admin) | paid | failed
+    status = db.Column(db.String(20), default="created")
     transaction_id = db.Column(db.String(120))
-    utr = db.Column(db.String(30), index=True)  
-    # created | paid | failed
+    utr = db.Column(db.String(30), index=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     paid_at = db.Column(db.DateTime)
-
-    def release_seats(self):
-        """Give the seats back to the slot (call once when a booking is cancelled/expired)."""
-        if self.slot and self.status != "cancelled":
-            self.slot.booked = max(0, (self.slot.booked or 0) - (self.participants or 0))
-
-    def latest_payment(self):
-        return max(self.payments, key=lambda p: p.id, default=None)
 
     def to_dict(self):
         return {"id": self.id, "booking_id": self.booking_id, "provider": self.provider,

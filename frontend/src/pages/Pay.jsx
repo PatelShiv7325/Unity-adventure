@@ -23,16 +23,20 @@ function loadRazorpay() {
 // server sends naive UTC timestamps
 const toMs = (iso) => new Date(iso.endsWith("Z") ? iso : iso + "Z").getTime();
 
-function HoldTimer({ createdAt, minutes, onExpire }) {
-  const [left, setLeft] = useState(() => toMs(createdAt) + minutes * 60000 - Date.now());
+// expiresAt comes from the server (it moves forward while the customer is paying)
+function HoldTimer({ expiresAt, onExpire }) {
+  const [left, setLeft] = useState(() => toMs(expiresAt) - Date.now());
   useEffect(() => {
-    const t = setInterval(() => {
-      const v = toMs(createdAt) + minutes * 60000 - Date.now();
+    let fired = false;
+    const tick = () => {
+      const v = toMs(expiresAt) - Date.now();
       setLeft(v);
-      if (v <= 0) { clearInterval(t); onExpire(); }
-    }, 1000);
+      if (v <= 0 && !fired) { fired = true; clearInterval(t); onExpire(); }
+    };
+    const t = setInterval(tick, 1000);
+    tick();
     return () => clearInterval(t);
-  }, [createdAt, minutes, onExpire]);
+  }, [expiresAt, onExpire]);
   const s = Math.max(0, Math.floor(left / 1000));
   return (
     <p className={`hold-timer${s < 300 ? " urgent" : ""}`}>
@@ -77,7 +81,19 @@ export default function Pay() {
   const [expired, setExpired] = useState(false);
   const pollRef = useRef(null);
 
-  const refresh = useCallback(() => getBooking(bookingId).then(setBooking), [bookingId]);
+  const refresh = useCallback(() => getBooking(bookingId).then((b) => { setBooking(b); return b; }), [bookingId]);
+
+  // The timer reached zero: ask the server before showing "expired". The server may have kept the
+  // seats because a payment is in progress, and then the timer simply continues with the new end time.
+  const handleExpire = useCallback(() => {
+    getBooking(bookingId)
+      .then((b) => {
+        setBooking(b);
+        const stillHeld = toMs(b.hold_expires_at) > Date.now();
+        if (b.status === "cancelled" || (!stillHeld && b.payment_status !== "paid" && b.payment_status !== "verifying")) setExpired(true);
+      })
+      .catch(() => {});
+  }, [bookingId]);
 
   useEffect(() => {
     refresh().catch(() => setError("Booking not found"));
@@ -99,6 +115,7 @@ export default function Pay() {
     setError(""); setBusy(true);
     try {
       setUpi(await createOrder(booking.id, "upi"));
+      refresh().catch(() => {});
     } catch (e) { setError(errMsg(e, "Could not start the UPI payment")); }
     setBusy(false);
   };
@@ -107,6 +124,7 @@ export default function Pay() {
     setError(""); setBusy(true);
     try {
       const order = await createOrder(booking.id, "card");
+      refresh().catch(() => {});
       if (order.mode === "demo") {
         await demoConfirm(booking.id);
         await refresh();
@@ -121,7 +139,7 @@ export default function Pay() {
         theme: { color: "#ff5a1f" },
         handler: async (resp) => {
           try { await verifyPayment({ booking_id: booking.id, ...resp }); await refresh(); }
-          catch { setError("Payment could not be verified. If money was deducted, contact us with your ticket code."); }
+          catch (e) { setError(errMsg(e, "Payment could not be verified. If money was deducted, contact us with your ticket code.")); }
           setBusy(false);
         },
         modal: { ondismiss: () => setBusy(false) },
@@ -170,7 +188,9 @@ export default function Pay() {
             <path d="M14 27 l8 8 l16 -17" fill="none" />
           </svg>
           <h1>Payment successful</h1>
-          <p className="muted">Your booking is confirmed. A copy of the ticket is sent to your email if one is on file.</p>
+          <p className="muted">
+            Your booking is confirmed.{cfg.email_tickets && booking.customer_email ? ` A copy of the ticket is being sent to ${booking.customer_email}.` : " Download your ticket below and keep it on your phone."}
+          </p>
           <div className="success-meta">
             <div><span>Activity</span><strong>{booking.activity}</strong></div>
             <div><span>When</span><strong>{prettyDate(booking.date)}, {prettyTime(booking.time)}</strong></div>
@@ -227,7 +247,12 @@ export default function Pay() {
       <h1 className="page-title">Payment</h1>
       <div className="checkout">
         <div className="panel">
-          {cfg.hold_minutes && <HoldTimer createdAt={booking.created_at} minutes={cfg.hold_minutes} onExpire={() => setExpired(true)} />}
+          {booking.hold_expires_at && <HoldTimer expiresAt={booking.hold_expires_at} onExpire={handleExpire} />}
+          {booking.payment_status === "failed" && !error && (
+            <div className="notice notice-error" role="alert">
+              We could not find your last UPI payment, so it was not accepted. If money left your account, call +91 90814 24343 with your UTR. You can also try again below.
+            </div>
+          )}
           {error && <p className="error" role="alert">{error}</p>}
 
           {!upi && (

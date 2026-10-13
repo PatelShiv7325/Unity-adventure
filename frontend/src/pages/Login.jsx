@@ -18,7 +18,9 @@ export default function Login() {
     setError(""); setBusy(true);
     try {
       await login(form.email.trim(), form.password);
-      navigate(location.state?.from?.pathname || "/dashboard", { replace: true });
+      const back = location.state?.from?.pathname || sessionStorage.getItem("returnTo") || "/dashboard";
+      sessionStorage.removeItem("returnTo");
+      navigate(back, { replace: true });
     } catch (err) {
       setError(errMsg(err, "Login failed"));
       setBusy(false);

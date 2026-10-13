@@ -4,7 +4,7 @@ from sqlalchemy import func
 from ..extensions import db
 from ..models import Activity, Booking, Payment, User, Coupon
 from ..utils.decorators import admin_required
-from ..services import payment_service as ps
+from ..services import payment_service as ps, booking_service
 
 bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 
@@ -15,7 +15,7 @@ bp = Blueprint("admin", __name__, url_prefix="/api/admin")
 def overview():
     total_activities = Activity.query.count()
 
-    today = date.today()
+    today = booking_service.today_local()
     todays_bookings = Booking.query.filter(
         func.date(Booking.created_at) == today
     ).count()
@@ -43,6 +43,11 @@ def overview():
 @admin_required
 def add_activity():
     d = request.get_json() or {}
+    missing = [f for f in ("title", "slug", "price") if not d.get(f)]
+    if missing:
+        return jsonify(error=f"Missing: {', '.join(missing)}"), 400
+    if Activity.query.filter_by(slug=d["slug"]).first():
+        return jsonify(error="An activity with this slug already exists"), 409
     a = Activity(title=d["title"], slug=d["slug"], price=d["price"],
                  description=d.get("description"), location=d.get("location"),
                  duration_minutes=d.get("duration_minutes", 30),
@@ -113,7 +118,7 @@ def update_booking_status(booking_id):
         return jsonify(error="Invalid status"), 400
     if b.status == "cancelled" and status != "cancelled":
         return jsonify(error="A cancelled booking cannot be re-opened. Ask the customer to book again."), 400
-    if status == "confirmed" and b.payment_status != "paid":
+    if status in ("confirmed", "completed") and b.payment_status != "paid":
         return jsonify(error="Verify the payment first (Approve payment) - a booking is confirmed only after it is paid"), 400
     if status == "cancelled":
         b.release_seats()
@@ -153,6 +158,12 @@ def reject_payment(booking_id):
     p.status = "failed"
     b.payment_status = "failed"
     b.payment_ref = None
+    if b.status == "pending":
+        # a fresh window so the customer can really try again (otherwise the old hold had
+        # usually run out already and the next page load cancelled the booking)
+        from datetime import datetime, timedelta
+        from flask import current_app
+        b.hold_until = datetime.utcnow() + timedelta(minutes=current_app.config.get("HOLD_MINUTES", 30))
     db.session.commit()
     return jsonify(b.to_dict())
 
@@ -244,10 +255,24 @@ def list_coupons():
 @admin_required
 def add_coupon():
     d = request.get_json() or {}
+    code = (d.get("code") or "").strip().upper()
+    if not code:
+        return jsonify(error="Enter a coupon code"), 400
+    try:
+        percent = int(d.get("percent_off", 0))
+    except (TypeError, ValueError):
+        return jsonify(error="percent_off must be a number"), 400
+    if not 0 <= percent <= 100:
+        return jsonify(error="percent_off must be between 0 and 100"), 400
+    if Coupon.query.filter_by(code=code).first():
+        return jsonify(error="This coupon code already exists"), 409
     expires_on = None
     if d.get("expires_on"):
-        expires_on = datetime.strptime(d["expires_on"], "%Y-%m-%d").date()
-    c = Coupon(code=d["code"].upper(), percent_off=d.get("percent_off", 0),
+        try:
+            expires_on = datetime.strptime(d["expires_on"], "%Y-%m-%d").date()
+        except ValueError:
+            return jsonify(error="expires_on must look like 2026-12-31"), 400
+    c = Coupon(code=code, percent_off=percent,
                expires_on=expires_on, is_active=d.get("is_active", True))
     db.session.add(c)
     db.session.commit()

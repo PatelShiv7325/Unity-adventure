@@ -1,12 +1,15 @@
+import json
 import uuid
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..extensions import db
 from ..models import Booking, Payment
-from ..services import payment_service as ps
+from ..services import payment_service as ps, booking_service, notification_service
 from ..utils.validators import valid_utr
 
 bp = Blueprint("payments", __name__, url_prefix="/api/payments")
+
+SUPPORT_PHONE = "+91 90814 24343"
 
 
 def _own_booking(booking_id):
@@ -14,7 +17,7 @@ def _own_booking(booking_id):
 
 
 def _mark_paid(booking, payment, provider_payment_id):
-    ps.mark_paid(db, booking, payment, provider_payment_id)
+    return ps.mark_paid(db, booking, payment, provider_payment_id)
 
 
 def _check_payable(booking):
@@ -24,6 +27,8 @@ def _check_payable(booking):
         return "This booking is already paid"
     if booking.payment_status == "verifying":
         return "Your UPI payment is already being verified"
+    if booking.slot and booking_service.slot_start(booking.slot) <= booking_service.now_local():
+        return "This time slot has already started. Please book another slot."
     return None
 
 
@@ -31,10 +36,11 @@ def _check_payable(booking):
 def public_config():
     """What the pay page needs to know: which methods exist (no secrets)."""
     cfg = current_app.config
+    email_tickets = notification_service.email_enabled()
     return jsonify(razorpay=ps.razorpay_enabled(), upi=bool(cfg.get("UPI_ID")),
                    demo=bool(cfg["ALLOW_DEMO_PAYMENTS"]) and not ps.razorpay_enabled(),
                    upi_id=cfg.get("UPI_ID"), payee=cfg.get("UPI_PAYEE_NAME"),
-                   hold_minutes=cfg.get("HOLD_MINUTES", 30))
+                   hold_minutes=cfg.get("HOLD_MINUTES", 30), email_tickets=email_tickets)
 
 
 @bp.post("/create-order")
@@ -47,6 +53,8 @@ def create_order():
         return jsonify(error=problem), 400
 
     payment_method = d.get("payment_method", "card")
+    # the customer is now paying: keep their seats while they do it
+    booking_service.extend_hold(booking)
 
     if payment_method == "upi":
         cfg = current_app.config
@@ -101,8 +109,44 @@ def verify():
         payment.status = "failed"
         db.session.commit()
         return jsonify(error="Payment verification failed"), 400
-    _mark_paid(booking, payment, d["razorpay_payment_id"])
+    confirmed = _mark_paid(booking, payment, d["razorpay_payment_id"])
+    if not confirmed:
+        # money was taken but the seats were released and are gone: never pretend it worked
+        return jsonify(error=f"Your payment was received, but the seats were released before it completed "
+                             f"and are no longer available. We will refund you in full. "
+                             f"For help call {SUPPORT_PHONE} with booking number {booking.id}."), 409
     return jsonify(booking.to_dict())
+
+
+@bp.post("/webhook")
+def razorpay_webhook():
+    """Razorpay calls this by itself when a payment succeeds.
+
+    It is the safety net for the customer who pays and then closes the browser (or loses signal)
+    before the page can call /verify: without it the money is taken but the booking stays unpaid
+    and later expires. Set the same secret in Razorpay Dashboard > Webhooks and in
+    RAZORPAY_WEBHOOK_SECRET, and enable the events payment.captured and order.paid."""
+    raw = request.get_data()
+    if not ps.verify_webhook_signature(raw, request.headers.get("X-Razorpay-Signature", "")):
+        return jsonify(error="Invalid signature"), 400
+    try:
+        event = json.loads(raw)
+        if event.get("event") not in ("payment.captured", "order.paid"):
+            return jsonify(ok=True, ignored=True)
+        entity = event["payload"]["payment"]["entity"]
+        order_id, payment_id, amount = entity.get("order_id"), entity.get("id"), entity.get("amount")
+    except (ValueError, KeyError, TypeError):
+        return jsonify(ok=True, ignored=True)  # 200 so Razorpay does not keep retrying a malformed event
+
+    payment = Payment.query.filter_by(provider="razorpay", provider_order_id=order_id).first()
+    if not payment:
+        return jsonify(ok=True, ignored=True)
+    if amount is not None and int(amount) != int(round(float(payment.amount) * 100)):
+        current_app.logger.error("Webhook amount mismatch for order %s: got %s", order_id, amount)
+        return jsonify(ok=True, ignored=True)
+    if payment.status != "paid":
+        _mark_paid(payment.booking, payment, payment_id)
+    return jsonify(ok=True)
 
 
 @bp.post("/demo-confirm")
@@ -132,7 +176,8 @@ def upi_submit():
     d = request.get_json() or {}
     booking = _own_booking(d.get("booking_id"))
     if booking.status == "cancelled":
-        return jsonify(error="This booking was cancelled or expired. Please book again."), 400
+        return jsonify(error=f"This booking was cancelled or expired. If money was deducted from your account, "
+                             f"call {SUPPORT_PHONE} with your UPI reference and we will sort it out."), 400
     if booking.payment_status == "paid":
         return jsonify(error="This booking is already paid"), 400
 

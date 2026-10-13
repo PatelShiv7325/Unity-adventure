@@ -1,5 +1,6 @@
 """Ticket generation: a QR code for the ticket code, and a full printable ticket image (PNG)."""
 import io
+import os
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 
@@ -8,6 +9,8 @@ CANOPY = (255, 90, 31)
 SUN = (255, 194, 26)
 GLACIER = (223, 240, 249)
 MUTED = (77, 98, 116)
+
+_FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets", "fonts")
 
 
 def generate_ticket_qr(ticket_code: str) -> bytes:
@@ -18,9 +21,12 @@ def generate_ticket_qr(ticket_code: str) -> bytes:
 
 
 def _font(size, bold=False):
-    names = (["DejaVuSans-Bold.ttf", "arialbd.ttf", "Arial Bold.ttf"] if bold
-             else ["DejaVuSans.ttf", "arial.ttf", "Arial.ttf"])
-    for n in names:
+    # The bundled font comes first so the ticket looks identical on every server
+    # (a bare Linux server often has no fonts installed at all).
+    name = "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"
+    candidates = [os.path.join(_FONT_DIR, name), name,
+                  "arialbd.ttf" if bold else "arial.ttf"]
+    for n in candidates:
         try:
             return ImageFont.truetype(n, size)
         except OSError:
@@ -29,6 +35,19 @@ def _font(size, bold=False):
         return ImageFont.load_default(size=size)  # Pillow >= 10.1
     except TypeError:
         return ImageFont.load_default()
+
+
+def _fit(draw, text, max_width, size, bold=True, min_size=16):
+    """Shrink the font until the text fits; only then cut it with '...'."""
+    while size > min_size and draw.textlength(text, font=_font(size, bold)) > max_width:
+        size -= 2
+    font = _font(size, bold)
+    if draw.textlength(text, font=font) > max_width:
+        base = text
+        while len(base) > 1 and draw.textlength(base + "...", font=font) > max_width:
+            base = base[:-1]
+        text = base.rstrip() + "..."
+    return text, font
 
 
 def generate_ticket_image(booking) -> bytes:
@@ -57,8 +76,8 @@ def generate_ticket_image(booking) -> bytes:
         col, row = i % 2, i // 2
         x, y = x0 + col * 340, y0 + row * 100
         d.text((x, y), label, font=_font(16, True), fill=MUTED)
-        v = value if len(value) <= 20 else value[:19] + "..."
-        d.text((x, y + 26), v, font=_font(30, True), fill=NIGHT)
+        text, font = _fit(d, value, 310, 30)
+        d.text((x, y + 26), text, font=font, fill=NIGHT)
 
     for y in range(130, H - 20, 18):
         d.line([(750, y), (750, y + 9)], fill=(190, 205, 216), width=3)

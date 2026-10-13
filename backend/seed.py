@@ -7,6 +7,18 @@ import os
 
 app = create_app()
 
+# The admin account can approve payments, so it must never use a password that is written in the
+# source code (anyone who can read the GitHub repo would know it).
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@example.com").strip().lower()
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "")
+if not ADMIN_PASSWORD:
+    if app.config["IS_PRODUCTION"]:
+        raise SystemExit("Set ADMIN_PASSWORD (and optionally ADMIN_EMAIL) before running seed.py in production.")
+    ADMIN_PASSWORD = "@unity#123"  # local development only
+    print("NOTE: using the development admin password. Set ADMIN_PASSWORD before going live.")
+elif len(ADMIN_PASSWORD) < 10:
+    raise SystemExit("ADMIN_PASSWORD must be at least 10 characters.")
+
 SAMPLE = [
     ("Paramotor Ride", "paramotor-ride", 1999, 7, "Ralej(coastal), Khambhat", "Medium",
      "Powered winchgliding with an ex-Indian Army instructor. Fly Smart (5-7 min, Rs.1,999) or Fly High (7-9 min, Rs.2,499) - choose your package when booking.",
@@ -24,9 +36,9 @@ SAMPLE = [
 
 with app.app_context():
     db.create_all()
-    if not User.query.filter_by(email="admin@example.com").first():
-        admin = User(name="Admin", email="admin@example.com", phone="0000000000", role="admin")
-        admin.set_password(os.getenv("ADMIN_PASSWORD", "@unity#123"))
+    if not User.query.filter_by(email=ADMIN_EMAIL).first():
+        admin = User(name="Admin", email=ADMIN_EMAIL, phone="0000000000", role="admin")
+        admin.set_password(ADMIN_PASSWORD)
         db.session.add(admin)
     for title, slug, price, mins, loc, diff, desc, safety, image in SAMPLE:
         a = Activity.query.filter_by(slug=slug).first()
@@ -48,4 +60,4 @@ with app.app_context():
                 db.session.add(Slot(activity_id=a.id, slot_date=date.today() + timedelta(days=d),
                                     start_time=t, capacity=10))
     db.session.commit()
-    print("Seeded. Admin login: admin@example.com / (your ADMIN_PASSWORD, default @unity#123) - change it!")
+    print(f"Seeded. Admin login: {ADMIN_EMAIL} / (your ADMIN_PASSWORD)")

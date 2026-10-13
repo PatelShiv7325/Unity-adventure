@@ -1,5 +1,5 @@
-from datetime import date
 from flask import Blueprint, request, jsonify
+from datetime import date
 from ..models import Activity, Slot
 from ..services import booking_service
 
@@ -23,11 +23,12 @@ def get_slots(slug):
     a = Activity.query.filter_by(slug=slug, is_active=True).first_or_404()
     booking_service.expire_stale_holds()
     booking_service.ensure_slots(a)
-    q = Slot.query.filter(Slot.activity_id == a.id, Slot.slot_date >= date.today())
+    q = Slot.query.filter(Slot.activity_id == a.id, Slot.slot_date >= booking_service.today_local())
     if request.args.get("date"):
         try:
             q = q.filter(Slot.slot_date == date.fromisoformat(request.args["date"]))
         except ValueError:
             return jsonify(error="date must look like 2026-10-25"), 400
     slots = q.order_by(Slot.slot_date, Slot.start_time).all()
-    return jsonify([s.to_dict() for s in slots])
+    # slots that already started (or start within the booking cut-off) are not offered
+    return jsonify([s.to_dict() for s in slots if booking_service.slot_is_open(s)])
