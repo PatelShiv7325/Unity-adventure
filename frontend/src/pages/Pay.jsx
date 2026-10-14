@@ -307,6 +307,11 @@ export default function Pay() {
                 </div>
               </div>
 
+              <p className="muted small">
+                If your UPI app says "limit exceeded" or "payment failed", your money has not been debited.
+                Try another bank account or UPI app, or call +91 90814 24343.
+              </p>
+              
               <label>UPI reference number (UTR)
                 <input value={utr} inputMode="numeric" maxLength={12} placeholder="12 digits, e.g. 412345678901"
                   onChange={(e) => setUtr(e.target.value.replace(/\D/g, ""))} />
