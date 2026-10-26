@@ -285,9 +285,9 @@ export default function Pay() {
 
           {upi && (
             <div className="upi-flow">
-              <ol className="upi-steps">
-                <li>Scan the QR with any UPI app (amount is filled in), or tap <em>Open UPI app</em> on your phone.</li>
-                <li>Pay exactly <strong>{rupees(upi.amount_rupees)}</strong>.</li>
+                            <ol className="upi-steps">
+                <li>Tap <em>Open UPI app</em>, or scan the QR from another phone (amount is filled in).</li>
+                <li>If your app says "declined" or "limit exceeded": tap <em>Copy</em> next to the UPI ID below, open any UPI app, choose <em>Pay to UPI ID</em> and pay exactly <strong>{rupees(upi.amount_rupees)}</strong>.</li>
                 <li>Enter the 12-digit <strong>UTR / reference number</strong> from the payment screen below.</li>
               </ol>
 

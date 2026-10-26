@@ -47,7 +47,7 @@ def verify_webhook_signature(raw_body: bytes, signature: str) -> bool:
 def upi_uri(upi_id, payee, amount_rupees, note, ref):
     """Standard UPI deep link. Every UPI app understands it, and the amount is pre-filled."""
     return (f"upi://pay?pa={quote(upi_id, safe='@')}&pn={quote(payee)}"
-            f"&am={float(amount_rupees):.2f}&cu=INR&tn={quote(note)}&tr={quote(ref)}")
+            f"&am={float(amount_rupees):.2f}&cu=INR&tn={quote(note)}")
 
 
 def upi_qr_data_uri(uri):
