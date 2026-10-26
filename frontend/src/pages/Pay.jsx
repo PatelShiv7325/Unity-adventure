@@ -307,10 +307,14 @@ export default function Pay() {
                 </div>
               </div>
 
-              <p className="muted small">
-                If your UPI app says "limit exceeded" or "payment failed", your money has not been debited.
-                Try another bank account or UPI app, or call +91 90814 24343.
-              </p>
+              <div className="notice notice-info" role="note" style={{ display: "block" }}>
+                <strong>Payment failed or "limit exceeded"?</strong> Your money has not been debited.
+                <ul style={{ margin: "6px 0 0", paddingLeft: 20 }}>
+                  <li>Pay again from another bank account or another UPI app (GPay, PhonePe, Paytm).</li>
+                  <li>Or choose <em>Card / Netbanking</em> by tapping "Change payment method" below.</li>
+                  <li>Your seats stay held while the timer is running. Need help? Call +91 90814 24343.</li>
+                </ul>
+              </div>
               
               <label>UPI reference number (UTR)
                 <input value={utr} inputMode="numeric" maxLength={12} placeholder="12 digits, e.g. 412345678901"
