@@ -73,3 +73,54 @@ def send_booking_confirmation_async(booking) -> bool:
 
     threading.Thread(target=_run, daemon=True).start()
     return True
+
+def send_admin_payment_alert(booking) -> bool:
+    """Email the owner that a UPI payment is waiting to be checked. Never raises."""
+    cfg = current_app.config
+    to_email = cfg.get("ADMIN_NOTIFY_EMAIL")
+    if not to_email or not email_enabled():
+        return False
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = f"UPI payment to check: Rs {float(booking.amount):,.0f} - {booking.customer_name}"
+        msg["From"] = cfg["SMTP_FROM"] or cfg["SMTP_USER"]
+        msg["To"] = to_email
+        what = booking.activity.title + (f" - {booking.package}" if booking.package else "")
+        msg.set_content(
+            "A customer says they have paid by UPI.\n\n"
+            f"Amount expected: Rs {float(booking.amount):,.2f}\n"
+            f"UTR they entered: {booking.payment_ref}\n"
+            f"Customer: {booking.customer_name} ({booking.customer_phone})\n"
+            f"Ride: {what}, {booking.participants} person(s)\n"
+            f"Date: {booking.slot.slot_date.strftime('%d %b %Y')} at {booking.slot.start_time.strftime('%I:%M %p').lstrip('0')}\n"
+            f"Ticket code: {booking.ticket_code}\n\n"
+            "To check: open PhonePe > History and find a payment with the same UTR and the same amount.\n"
+            "If it matches, open Admin > Bookings and press Approve payment. Otherwise press Reject."
+        )
+        with smtplib.SMTP(cfg["SMTP_HOST"], cfg["SMTP_PORT"], timeout=15) as server:
+            server.starttls()
+            server.login(cfg["SMTP_USER"], cfg["SMTP_PASS"])
+            server.send_message(msg)
+        return True
+    except Exception:
+        current_app.logger.exception("Failed to send admin payment alert")
+        return False
+
+
+def send_admin_payment_alert_async(booking) -> bool:
+    """Send the alert in the background so the customer's request is never slowed down."""
+    if not current_app.config.get("ADMIN_NOTIFY_EMAIL") or not email_enabled():
+        return False
+    app = current_app._get_current_object()
+    booking_id = booking.id
+
+    def _run():
+        from ..extensions import db
+        from ..models import Booking
+        with app.app_context():
+            b = db.session.get(Booking, booking_id)
+            if b:
+                send_admin_payment_alert(b)
+
+    threading.Thread(target=_run, daemon=True).start()
+    return True

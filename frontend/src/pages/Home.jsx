@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { getActivities } from "../api/activities";
+import { getActivities, readCachedActivities } from "../api/activities";
 import ActivityCard from "../components/ActivityCard.jsx";
 import Scene from "../components/Scene.jsx";
 import TrustBand from "../components/TrustBand.jsx";
@@ -10,16 +10,16 @@ import Reveal from "../components/Reveal.jsx";
 import { CardSkeletons } from "../components/Skeleton.jsx";
 
 export default function Home() {
-  const [activities, setActivities] = useState(null);
+  const [activities, setActivities] = useState(() => readCachedActivities());
   const [loadError, setLoadError] = useState(false);
   useEffect(() => {
-    getActivities().then(setActivities).catch(() => setLoadError(true));
+    getActivities().then(setActivities).catch(() => setActivities((cur) => { if (!cur) setLoadError(true); return cur; }));
   }, []);
 
   return (
     <>
       <section className="hero hero-video">
-        <video className="hero-video-bg" src="/videos/hero.mp4" autoPlay muted loop playsInline />
+        <video className="hero-video-bg" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" preload="metadata" autoPlay muted loop playsInline />
         <div className="hero-video-shade" aria-hidden="true" />
         <div className="hero-inner">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>

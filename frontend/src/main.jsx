@@ -4,9 +4,13 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
+import { prefetchActivities } from "./api/activities";
 import "./styles/global.css";
 import "./styles/responsive.css";
 import "./styles/polish.css";
+
+// start loading the rides (and wake the server) before the page even finishes drawing
+prefetchActivities();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

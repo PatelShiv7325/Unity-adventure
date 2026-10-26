@@ -201,4 +201,5 @@ def upi_submit():
         booking.payment_status = "verifying"
         booking.payment_ref = utr
         db.session.commit()
+        notification_service.send_admin_payment_alert_async(booking)  # tell the owner to check it
     return jsonify(booking.to_dict())
