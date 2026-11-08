@@ -44,8 +44,8 @@ class Config:
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
     WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
     WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN", "")
-    UPI_ID = os.getenv("UPI_ID", "shiv25623patel@oksbi")
-    UPI_PAYEE_NAME = os.getenv("UPI_PAYEE_NAME", "Shiv Patel")
+    UPI_ID = os.getenv("UPI_ID", "7984438055@ybl")
+    UPI_PAYEE_NAME = os.getenv("UPI_PAYEE_NAME", "Unity Adventure Sports")
     # false (default): customer submits the UTR and you approve it in Admin > Bookings.
     # true: confirm instantly with no check. Only for local testing - ignored when FLASK_ENV=production.
     UPI_AUTO_CONFIRM = _flag("UPI_AUTO_CONFIRM")
