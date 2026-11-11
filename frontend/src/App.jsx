@@ -27,6 +27,7 @@ import AdminUsers from "./pages/admin/AdminUsers.jsx";
 import AdminRevenue from "./pages/admin/AdminRevenue.jsx";
 import AdminCoupons from "./pages/admin/AdminCoupons.jsx";
 import AdminCheckin from "./pages/admin/AdminCheckin.jsx";
+import Vision from "./pages/Vision.jsx";
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/vision" element={<Vision />} />
           <Route path="/services/joy-rides" element={<JoyRides />} />
           <Route path="/services/training" element={<Training />} />
           <Route path="/login" element={<Login />} />

@@ -17,6 +17,7 @@ export default function Footer() {
           <Link to="/gallery">Gallery</Link>
           <Link to="/about">About</Link>
           <Link to="/terms">Terms &amp; conditions</Link>
+          <Link to="/vision">Our vision</Link>
         </nav>
         <div className="footer-col">
           <strong>Contact</strong>

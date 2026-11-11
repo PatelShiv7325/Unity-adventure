@@ -51,21 +51,34 @@ CREATE TABLE bookings (
   user_id        INT NOT NULL REFERENCES users(id),
   activity_id    INT NOT NULL REFERENCES activities(id),
   slot_id        INT NOT NULL REFERENCES slots(id),
+  customer_name  VARCHAR(100) NOT NULL,           -- who is flying
+  customer_phone VARCHAR(20)  NOT NULL,
+  customer_email VARCHAR(120),
   participants   INT DEFAULT 1,
   amount         DECIMAL(10,2) NOT NULL,
   coupon_id      INT REFERENCES coupons(id),
-  payment_status VARCHAR(20) DEFAULT 'pending',   -- pending | paid | failed | refunded
+  discount       DECIMAL(10,2) DEFAULT 0,
+  payment_status VARCHAR(20) DEFAULT 'pending',   -- pending | verifying | paid | failed | refund_pending | refunded
   payment_ref    VARCHAR(120),
-  status         VARCHAR(20) DEFAULT 'confirmed', -- confirmed | cancelled | completed
+  status         VARCHAR(20) DEFAULT 'pending',   -- pending | confirmed | cancelled | completed
   ticket_code    VARCHAR(40) UNIQUE,
-  created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  hold_until     TIMESTAMP,                       -- end of the unpaid seat hold (UTC)
+  package        VARCHAR(40),                     -- e.g. "Fly Smart"
+  checked_in_at  TIMESTAMP                        -- set when staff scan the ticket
 );
 
-CREATE TABLE reviews (
-  id          INT PRIMARY KEY AUTO_INCREMENT,
-  user_id     INT NOT NULL REFERENCES users(id),
-  activity_id INT NOT NULL REFERENCES activities(id),
-  rating      INT NOT NULL,
-  comment     TEXT,
-  created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE payments (
+  id                  INT PRIMARY KEY AUTO_INCREMENT,
+  booking_id          INT NOT NULL REFERENCES bookings(id),
+  provider            VARCHAR(20) NOT NULL,       -- razorpay | upi | demo
+  provider_order_id   VARCHAR(120),
+  provider_payment_id VARCHAR(120),
+  amount              DECIMAL(10,2) NOT NULL,
+  currency            VARCHAR(3) DEFAULT 'INR',
+  status              VARCHAR(20) DEFAULT 'created',  -- created | verifying | paid | failed
+  transaction_id      VARCHAR(120),
+  utr                 VARCHAR(30),
+  created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  paid_at             TIMESTAMP
 );

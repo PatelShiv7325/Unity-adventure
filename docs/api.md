@@ -23,3 +23,13 @@ Base URL: `http://localhost:5000/api`. Protected routes need `Authorization: Bea
 | POST | /admin/activities | admin | Add activity | done |
 | GET | /admin/bookings, /admin/payments, /admin/users, /admin/revenue | admin | Admin data | done |
 | GET | /weather/:slug | - | Live weather | Step 11 |
+| POST | /bookings/validate-coupon | user | Check a coupon code against an amount | done |
+| GET | /bookings/:id/ticket | user | Ticket PNG, only after payment is confirmed | done |
+| GET | /payments/config | - | Which payment methods are available | done |
+| POST | /payments/webhook | Razorpay signature | Confirms payment even if the browser closed | done |
+| POST | /payments/upi-submit | user | Customer submits the 12-digit UTR | done |
+| PATCH | /admin/bookings/:id/approve-payment | admin | Approve a UPI payment | done |
+| PATCH | /admin/bookings/:id/reject-payment | admin | Reject a UPI payment | done |
+| PATCH | /admin/bookings/:id/refund | admin | Mark a booking refunded | done |
+| GET | /admin/tickets/:code | admin | Look up a ticket for check-in | done |
+| POST | /admin/tickets/:code/check-in | admin | Check a ticket in | done |

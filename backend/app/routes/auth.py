@@ -9,6 +9,7 @@ bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
 
 @bp.post("/register")
+@rate_limit("register", 10, 3600)
 def register():
     data = request.get_json() or {}
     missing = require_fields(data, ["name", "email", "password"])
@@ -29,16 +30,17 @@ def register():
     db.session.commit()
     token = create_access_token(identity=str(user.id))
     return jsonify(token=token, user=user.to_dict()), 201
-@rate_limit("register", 10, 3600)
+
 
 @bp.post("/login")
+@rate_limit("login", 8, 300)
 def login():
     data = request.get_json() or {}
-    user = User.query.filter_by(email=(data.get("email") or "").lower()).first()
+    user = User.query.filter_by(email=(data.get("email") or "").strip().lower()).first()
     if not user or not user.check_password(data.get("password", "")):
         return jsonify(error="Invalid email or password"), 401
     return jsonify(token=create_access_token(identity=str(user.id)), user=user.to_dict())
-@rate_limit("login", 8, 300)
+
 
 @bp.get("/me")
 @jwt_required()

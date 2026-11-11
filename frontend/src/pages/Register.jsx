@@ -34,10 +34,10 @@ export default function Register() {
         <label>Phone <input inputMode="tel" autoComplete="tel" placeholder="10-digit mobile" value={form.phone} onChange={set("phone")} /></label>
         <label>Password
           <div className="pw-field">
-            <input type={show ? "text" : "password"} required minLength={6} autoComplete="new-password" value={form.password} onChange={set("password")} />
+            <input type={show ? "text" : "password"} required minLength={8} autoComplete="new-password" value={form.password} onChange={set("password")} />
             <button type="button" className="pw-toggle" onClick={() => setShow((v) => !v)} aria-label={show ? "Hide password" : "Show password"}>{show ? "Hide" : "Show"}</button>
           </div>
-          <span className="muted small">At least 6 characters</span>
+          <span className="muted small">At least 8 characters</span>
         </label>
         {error && <p className="error" role="alert">{error}</p>}
         <button className={`btn btn-lg btn-block${busy ? " loading" : ""}`} disabled={busy}>{busy ? "Creating account…" : "Create account"}</button>
