@@ -68,7 +68,7 @@ export default function AdminBookings() {
                 <td>{rupees(b.amount)}</td>
                 <td>
                   <StatusPill value={b.payment_status} />
-                  {b.utr && <div className="muted">UTR {b.utr}</div>}
+                  {b.unverified_upi && <div className="field-error">UPI not verified - check PhonePe</div>}
                 </td>
                 <td><StatusPill value={b.status} /></td>
                 <td className="admin-actions">

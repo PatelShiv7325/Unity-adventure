@@ -148,14 +148,16 @@ export default function Pay() {
     } catch (e) { setError(errMsg(e, "Payment failed")); setBusy(false); }
   };
 
-  const submitUtr = async () => {
+    const submitUtr = async () => {
     setError(""); setBusy(true);
     try {
-      const b = await upiSubmit({ booking_id: booking.id, order_id: upi.order_id, utr: utr.trim() });
+      const payload = { booking_id: booking.id, order_id: upi.order_id };
+      if (!cfg.upi_instant) payload.utr = utr.trim();
+      const b = await upiSubmit(payload);
       setBooking(b);
       setUpi(null);
-      toast.info(b.payment_status === "paid" ? "Payment confirmed" : "Payment submitted for verification");
-    } catch (e) { setError(errMsg(e, "Could not submit the payment reference")); }
+      toast.info(b.payment_status === "paid" ? "Payment confirmed. Your ticket is ready." : "Payment submitted for verification");
+    } catch (e) { setError(errMsg(e, "Could not confirm the payment")); }
     setBusy(false);
   };
 
@@ -288,7 +290,7 @@ export default function Pay() {
                             <ol className="upi-steps">
                 <li>Tap <em>Open UPI app</em>, or scan the QR from another phone (amount is filled in).</li>
                 <li>If your app says "declined" or "limit exceeded": tap <em>Copy</em> next to the UPI ID below, open any UPI app, choose <em>Pay to UPI ID</em> and pay exactly <strong>{rupees(upi.amount_rupees)}</strong>.</li>
-                <li>Enter the 12-digit <strong>UTR / reference number</strong> from the payment screen below.</li>
+                <li>{cfg.upi_instant ? "After you have paid, tap the button below to get your ticket." : <>Enter the 12-digit <strong>UTR / reference number</strong> from the payment screen below.</>}</li>
               </ol>
 
               <div className="qr-box">
@@ -316,13 +318,15 @@ export default function Pay() {
                 </ul>
               </div>
               
-              <label>UPI reference number (UTR)
-                <input value={utr} inputMode="numeric" maxLength={12} placeholder="12 digits, e.g. 412345678901"
-                  onChange={(e) => setUtr(e.target.value.replace(/\D/g, ""))} />
-                <span className="muted small">Find it in GPay / PhonePe / Paytm under the payment details (called UPI Ref ID, UTR or Transaction ID).</span>
-              </label>
-              <button className={`btn btn-lg btn-block${busy ? " loading" : ""}`} disabled={busy || utr.length !== 12} onClick={submitUtr}>
-                {busy ? "Submitting…" : "I have paid — submit reference"}
+              {!cfg.upi_instant && (
+                <label>UPI reference number (UTR)
+                  <input value={utr} inputMode="numeric" maxLength={12} placeholder="12 digits, e.g. 412345678901"
+                    onChange={(e) => setUtr(e.target.value.replace(/\D/g, ""))} />
+                  <span className="muted small">Find it in GPay / PhonePe / Paytm under the payment details (called UPI Ref ID, UTR or Transaction ID).</span>
+                </label>
+              )}
+              <button className={`btn btn-lg btn-block${busy ? " loading" : ""}`} disabled={busy || (!cfg.upi_instant && utr.length !== 12)} onClick={submitUtr}>
+                {busy ? "Please wait…" : cfg.upi_instant ? "I have paid — get my ticket" : "I have paid — submit reference"}
               </button>
               <button className="link-quiet" onClick={() => { setUpi(null); setUtr(""); setError(""); }}>Change payment method</button>
             </div>

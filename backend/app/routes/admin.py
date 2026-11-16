@@ -104,7 +104,8 @@ def all_bookings():
     for b in rows:
         p = b.latest_payment()
         out.append({**b.to_dict(), "account_email": b.user.email,
-                    "utr": p.utr if p else None, "pay_method": p.provider if p else None})
+                    "utr": p.utr if p else None, "pay_method": p.provider if p else None,
+                    "unverified_upi": bool(p and p.provider == "upi" and p.status == "paid" and not p.utr)})
     return jsonify(out)
 
 

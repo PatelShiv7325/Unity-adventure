@@ -78,7 +78,7 @@ def test_cancel_paid_booking_marks_refund_and_frees_seats(auth, app):
 def test_cannot_pay_someone_elses_booking(auth, app):
     c, h = auth
     b = _book(c, h)
-    r2 = c.post("/api/auth/register", json={"name": "Other", "email": "o@example.com", "password": "secret1"})
+    r2 = c.post("/api/auth/register", json={"name": "Other", "email": "o@example.com", "password": "secret123"})
     h2 = {"Authorization": "Bearer " + r2.get_json()["token"]}
     assert c.post("/api/payments/create-order", headers=h2, json={"booking_id": b["id"]}).status_code == 404
 
@@ -131,7 +131,7 @@ def test_cannot_book_a_slot_that_already_started(auth, app):
 
 def test_slot_list_hides_slots_that_can_no_longer_be_booked(auth, app):
     c, h = auth
-    r = c.get("/api/activities/paramotor-ride/slots")
+    r = c.get("/api/activities/test-ride/slots")
     assert r.status_code == 200
     now = booking_service.now_local()
     for s in r.get_json():
@@ -294,12 +294,12 @@ def test_admin_reject_gives_customer_a_fresh_window(auth, app):
     c.post("/api/payments/upi-submit", headers=h, json={"booking_id": b["id"], "order_id": o["order_id"], "utr": "412345678901"})
     from app.models import User
     with app.app_context():
-        u = User(name="Admin", email="a@example.com", role="admin"); u.set_password("secret1")
+        u = User(name="Admin", email="a@example.com", role="admin"); u.set_password("secret123")
         db.session.add(u)
         bk = db.session.get(Booking, b["id"]); bk.created_at = datetime.utcnow() - timedelta(hours=2)
         bk.hold_until = datetime.utcnow() - timedelta(hours=1)
         db.session.commit()
-    tok = c.post("/api/auth/login", json={"email": "a@example.com", "password": "secret1"}).get_json()["token"]
+    tok = c.post("/api/auth/login", json={"email": "a@example.com", "password": "secret123"}).get_json()["token"]
     ah = {"Authorization": "Bearer " + tok}
     assert c.patch(f"/api/admin/bookings/{b['id']}/reject-payment", headers=ah).status_code == 200
     c.get("/api/bookings/mine", headers=h)    # sweep
@@ -309,4 +309,13 @@ def test_admin_reject_gives_customer_a_fresh_window(auth, app):
     o2 = c.post("/api/payments/create-order", headers=h, json={"booking_id": b["id"], "payment_method": "upi"}).get_json()
     c.post("/api/payments/upi-submit", headers=h, json={"booking_id": b["id"], "order_id": o2["order_id"], "utr": "512345678901"})
     assert c.patch(f"/api/admin/bookings/{b['id']}/approve-payment", headers=ah).status_code == 200
+    assert c.get(f"/api/bookings/{b['id']}/ticket", headers=h).status_code == 200
+    
+def test_instant_upi_ticket_without_utr(auth, app):
+    c, h = auth
+    app.config["UPI_INSTANT_TICKET"] = True
+    b = _book(c, h)
+    o = c.post("/api/payments/create-order", headers=h, json={"booking_id": b["id"], "payment_method": "upi"}).get_json()
+    r = c.post("/api/payments/upi-submit", headers=h, json={"booking_id": b["id"], "order_id": o["order_id"]})
+    assert r.status_code == 200 and r.get_json()["payment_status"] == "paid"
     assert c.get(f"/api/bookings/{b['id']}/ticket", headers=h).status_code == 200

@@ -40,6 +40,7 @@ def public_config():
     return jsonify(razorpay=ps.razorpay_enabled(), upi=bool(cfg.get("UPI_ID")),
                    demo=bool(cfg["ALLOW_DEMO_PAYMENTS"]) and not ps.razorpay_enabled(),
                    upi_id=cfg.get("UPI_ID"), payee=cfg.get("UPI_PAYEE_NAME"),
+                   upi_instant=bool(cfg.get("UPI_INSTANT_TICKET")),
                    hold_minutes=cfg.get("HOLD_MINUTES", 30), email_tickets=email_tickets)
 
 
@@ -171,8 +172,8 @@ def demo_confirm():
 @bp.post("/upi-verify")  # old path kept so a cached old frontend does not get a 404
 @jwt_required()
 def upi_submit():
-    """Customer says 'I paid' and gives the 12-digit UPI reference (UTR).
-    The booking goes to 'verifying'; you approve it in Admin > Bookings."""
+    """Customer says 'I paid'. With UPI_INSTANT_TICKET the ticket is issued at once (no UTR needed).
+    Otherwise they give the 12-digit UTR and the booking waits for you in Admin > Bookings."""
     d = request.get_json() or {}
     booking = _own_booking(d.get("booking_id"))
     if booking.status == "cancelled":
@@ -181,21 +182,28 @@ def upi_submit():
     if booking.payment_status == "paid":
         return jsonify(error="This booking is already paid"), 400
 
+    cfg = current_app.config
+    instant = bool(cfg.get("UPI_INSTANT_TICKET"))
     utr = str(d.get("utr") or "").strip()
-    if not valid_utr(utr):
+    if (utr or not instant) and not valid_utr(utr):
         return jsonify(error="Enter the 12-digit UPI reference number (UTR) from your payment app"), 400
     payment = Payment.query.filter_by(booking_id=booking.id, provider="upi",
                                       provider_order_id=d.get("order_id")).first()
     if not payment:
         return jsonify(error="Unknown UPI order. Start the payment again."), 404
-    clash = Payment.query.filter(Payment.utr == utr, Payment.id != payment.id,
-                                 Payment.status.in_(("verifying", "paid"))).first()
-    if clash:
-        return jsonify(error="This UPI reference was already used for another booking"), 409
+    if utr:
+        clash = Payment.query.filter(Payment.utr == utr, Payment.id != payment.id,
+                                     Payment.status.in_(("verifying", "paid"))).first()
+        if clash:
+            return jsonify(error="This UPI reference was already used for another booking"), 409
 
-    payment.utr = utr
-    if current_app.config["UPI_AUTO_CONFIRM"] and not current_app.config["IS_PRODUCTION"]:
-        _mark_paid(booking, payment, utr)  # local testing only
+    payment.utr = utr or None
+    if instant or (cfg["UPI_AUTO_CONFIRM"] and not cfg["IS_PRODUCTION"]):
+        confirmed = _mark_paid(booking, payment, utr or f"upi_unverified_{payment.provider_order_id}")
+        if not confirmed:
+            return jsonify(error=f"Your payment was received, but the seats were released before it completed "
+                                 f"and are no longer available. We will refund you in full. "
+                                 f"For help call {SUPPORT_PHONE} with booking number {booking.id}."), 409
     else:
         payment.status = "verifying"
         booking.payment_status = "verifying"

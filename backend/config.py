@@ -73,3 +73,6 @@ class Config:
     FRONTEND_URL = os.getenv("FRONTEND_URL", "").rstrip("/")
     # Only set this if your ride prices already include GST. 0 = no GST line on the ticket.
     GST_PERCENT = float(os.getenv("GST_PERCENT", "0"))
+    # true = a customer who taps "I have paid" gets the ticket at once, with no UTR check.
+    # Anyone can then get a free ticket, so check your PhonePe history regularly.
+    UPI_INSTANT_TICKET = _flag("UPI_INSTANT_TICKET")
