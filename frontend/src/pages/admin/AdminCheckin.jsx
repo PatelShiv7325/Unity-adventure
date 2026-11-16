@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import jsQR from "jsqr";
 import { checkInTicket, lookupTicket } from "../../api/admin";
 import { errMsg, prettyDate, prettyTime } from "../../utils/format";
-import jsQR from "jsqr";
 
 // the QR holds a link like https://site/admin/checkin?code=ABC123; old tickets hold just the code
 const extractCode = (v) => {
@@ -15,7 +15,7 @@ export default function AdminCheckin() {
   const [busy, setBusy] = useState(false);
   const [scanning, setScanning] = useState(false);
   const videoRef = useRef(null);
-  // Camera scanning needs Chrome/Edge/Android (BarcodeDetector) and https (localhost also works).
+  // Camera scanning needs https (localhost also works). Works on every modern phone.
   const canScan = typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
 
   const find = async (value) => {
@@ -46,13 +46,14 @@ export default function AdminCheckin() {
 
   const reset = () => { setCode(""); setResult(null); setError(""); };
 
+  // opened from a scanned QR link: look the ticket up automatically
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get("code");
     if (p) find(p);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!scanning) return undefined;  
+    if (!scanning) return undefined;
     let stream;
     let timer;
     let stopped = false;
@@ -63,7 +64,7 @@ export default function AdminCheckin() {
         const video = videoRef.current;
         video.srcObject = stream;
         await video.play();
-                const detector = "BarcodeDetector" in window ? new window.BarcodeDetector({ formats: ["qr_code"] }) : null;
+        const detector = "BarcodeDetector" in window ? new window.BarcodeDetector({ formats: ["qr_code"] }) : null;
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
         timer = setInterval(async () => {
@@ -83,17 +84,6 @@ export default function AdminCheckin() {
             if (value) { setScanning(false); find(value); }
           } catch { /* keep scanning */ }
         }, 300);
-      } catch {
-        setError("Could not open the camera. Type the ticket code instead.");
-        setScanning(false);
-      }
-    })();
-    return () => {
-      stopped = true;
-      clearInterval(timer);
-      if (stream) stream.getTracks().forEach((t) => t.stop());
-    };
-  }, [scanning]); // eslint-disable-line react-hooks/exhaustive-deps
       } catch {
         setError("Could not open the camera. Type the ticket code instead.");
         setScanning(false);
