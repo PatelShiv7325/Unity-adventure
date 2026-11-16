@@ -212,7 +212,7 @@ main > * { animation: rise 0.45s var(--ease) both; }
 .modal-title { margin: 0 32px 12px 0; color: var(--night); }
 .modal-x { position: absolute; right: 14px; top: 10px; border: 0; background: none; font-size: 2rem; line-height: 1; cursor: pointer; color: var(--muted); }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
-.ticket-img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); box-shadow: var(--shadow-sm); display: block; }
+.ticket-img { width: 100%; max-width: 440px; margin: 0 auto; height: auto; border-radius: 12px; border: 1px solid var(--line); box-shadow: var(--shadow-sm); display: block; }
 
 /* ---------- Status pills ---------- */
 .pill { display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; }

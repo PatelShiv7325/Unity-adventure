@@ -71,3 +71,5 @@ class Config:
     ADMIN_NOTIFY_EMAIL = os.getenv("ADMIN_NOTIFY_EMAIL") or os.getenv("ADMIN_EMAIL", "")
     # your website address, used inside the ticket QR (no trailing slash)
     FRONTEND_URL = os.getenv("FRONTEND_URL", "").rstrip("/")
+    # Only set this if your ride prices already include GST. 0 = no GST line on the ticket.
+    GST_PERCENT = float(os.getenv("GST_PERCENT", "0"))
