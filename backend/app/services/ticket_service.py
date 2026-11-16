@@ -85,8 +85,13 @@ def generate_ticket_image(booking) -> bytes:
 
     for y in range(130, H - 20, 18):
         d.line([(750, y), (750, y + 9)], fill=(190, 205, 216), width=3)
-    qr = Image.open(io.BytesIO(generate_ticket_qr(booking.ticket_code))).convert("RGB").resize((250, 250))
-    img.paste(qr, (810, 150))
+    qr_obj = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=6, border=3)
+    qr_obj.add_data(ticket_qr_value(booking.ticket_code))
+    qr_obj.make(fit=True)
+    qr = qr_obj.make_image(fill_color="black", back_color="white").convert("RGB")
+    if qr.width > 250:  # a long link makes a bigger QR: shrink in whole steps so it stays sharp
+        qr = qr.resize((250, 250), Image.NEAREST)
+    img.paste(qr, (810 + (250 - qr.width) // 2, 150 + (250 - qr.height) // 2))
     d.text((810, 410), "TICKET CODE", font=_font(15, True), fill=MUTED)
     d.text((810, 434), booking.ticket_code, font=_font(26, True), fill=CANOPY)
 

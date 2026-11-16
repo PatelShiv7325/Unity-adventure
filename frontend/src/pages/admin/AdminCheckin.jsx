@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { checkInTicket, lookupTicket } from "../../api/admin";
 import { errMsg, prettyDate, prettyTime } from "../../utils/format";
+import jsQR from "jsqr";
 
 // the QR holds a link like https://site/admin/checkin?code=ABC123; old tickets hold just the code
 const extractCode = (v) => {
@@ -15,7 +16,7 @@ export default function AdminCheckin() {
   const [scanning, setScanning] = useState(false);
   const videoRef = useRef(null);
   // Camera scanning needs Chrome/Edge/Android (BarcodeDetector) and https (localhost also works).
-  const canScan = typeof window !== "undefined" && "BarcodeDetector" in window && !!navigator.mediaDevices?.getUserMedia;
+  const canScan = typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
 
   const find = async (value) => {
     const c = extractCode(String(value ?? code).trim()).trim().toUpperCase();
@@ -62,13 +63,37 @@ export default function AdminCheckin() {
         const video = videoRef.current;
         video.srcObject = stream;
         await video.play();
-        const detector = new window.BarcodeDetector({ formats: ["qr_code"] });
+                const detector = "BarcodeDetector" in window ? new window.BarcodeDetector({ formats: ["qr_code"] }) : null;
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
         timer = setInterval(async () => {
           try {
-            const found = await detector.detect(video);
-            if (found.length) { setScanning(false); find(found[0].rawValue); }
+            let value = null;
+            if (detector) {
+              const found = await detector.detect(video);
+              if (found.length) value = found[0].rawValue;
+            } else if (video.videoWidth) {
+              canvas.width = video.videoWidth;
+              canvas.height = video.videoHeight;
+              ctx.drawImage(video, 0, 0);
+              const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+              const r = jsQR(data.data, data.width, data.height);
+              if (r) value = r.data;
+            }
+            if (value) { setScanning(false); find(value); }
           } catch { /* keep scanning */ }
-        }, 400);
+        }, 300);
+      } catch {
+        setError("Could not open the camera. Type the ticket code instead.");
+        setScanning(false);
+      }
+    })();
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+      if (stream) stream.getTracks().forEach((t) => t.stop());
+    };
+  }, [scanning]); // eslint-disable-line react-hooks/exhaustive-deps
       } catch {
         setError("Could not open the camera. Type the ticket code instead.");
         setScanning(false);
