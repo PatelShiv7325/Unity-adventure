@@ -44,8 +44,8 @@ class Config:
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
     WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
     WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN", "")
-    UPI_ID = os.getenv("UPI_ID", "shiv25623patel@oksbi")
-    UPI_PAYEE_NAME = os.getenv("UPI_PAYEE_NAME", "Shiv Patel")
+    UPI_ID = os.getenv("UPI_ID", "")
+    UPI_PAYEE_NAME = os.getenv("UPI_PAYEE_NAME", "Unity Adventure Sports")
     # false (default): customer submits the UTR and you approve it in Admin > Bookings.
     # true: confirm instantly with no check. Only for local testing - ignored when FLASK_ENV=production.
     UPI_AUTO_CONFIRM = _flag("UPI_AUTO_CONFIRM")
@@ -69,3 +69,5 @@ class Config:
     SMTP_FROM = os.getenv("SMTP_FROM", "")
     # Where "a UPI payment is waiting for you to check" alerts go (falls back to ADMIN_EMAIL)
     ADMIN_NOTIFY_EMAIL = os.getenv("ADMIN_NOTIFY_EMAIL") or os.getenv("ADMIN_EMAIL", "")
+    # your website address, used inside the ticket QR (no trailing slash)
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "").rstrip("/")

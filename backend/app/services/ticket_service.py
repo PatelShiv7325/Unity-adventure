@@ -3,6 +3,7 @@ import io
 import os
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
+from flask import current_app
 
 NIGHT = (11, 27, 43)
 CANOPY = (255, 90, 31)
@@ -48,7 +49,10 @@ def _fit(draw, text, max_width, size, bold=True, min_size=16):
             base = base[:-1]
         text = base.rstrip() + "..."
     return text, font
-
+    
+def ticket_qr_value(ticket_code: str) -> str:
+    base = current_app.config.get("FRONTEND_URL", "")
+    return f"{base}/admin/checkin?code={ticket_code}" if base else ticket_code
 
 def generate_ticket_image(booking) -> bytes:
     W, H = 1100, 520

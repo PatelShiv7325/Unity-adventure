@@ -18,7 +18,8 @@ export default function Login() {
     setError(""); setBusy(true);
     try {
       await login(form.email.trim(), form.password);
-      const back = location.state?.from?.pathname || sessionStorage.getItem("returnTo") || "/dashboard";
+      const from = location.state?.from;
+      const back = from ? from.pathname + (from.search || "") : sessionStorage.getItem("returnTo") || "/dashboard";
       sessionStorage.removeItem("returnTo");
       navigate(back, { replace: true });
     } catch (err) {

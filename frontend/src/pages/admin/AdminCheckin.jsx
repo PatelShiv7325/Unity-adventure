@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { checkInTicket, lookupTicket } from "../../api/admin";
 import { errMsg, prettyDate, prettyTime } from "../../utils/format";
 
+// the QR holds a link like https://site/admin/checkin?code=ABC123; old tickets hold just the code
+const extractCode = (v) => {
+  try { return new URL(v).searchParams.get("code") || v; } catch { return v; }
+};
+
 export default function AdminCheckin() {
   const [code, setCode] = useState("");
   const [result, setResult] = useState(null);
@@ -13,7 +18,7 @@ export default function AdminCheckin() {
   const canScan = typeof window !== "undefined" && "BarcodeDetector" in window && !!navigator.mediaDevices?.getUserMedia;
 
   const find = async (value) => {
-    const c = String(value ?? code).trim().toUpperCase();
+    const c = extractCode(String(value ?? code).trim()).trim().toUpperCase();
     if (!c) return;
     setBusy(true);
     setError("");
@@ -41,7 +46,12 @@ export default function AdminCheckin() {
   const reset = () => { setCode(""); setResult(null); setError(""); };
 
   useEffect(() => {
-    if (!scanning) return undefined;
+    const p = new URLSearchParams(window.location.search).get("code");
+    if (p) find(p);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!scanning) return undefined;  
     let stream;
     let timer;
     let stopped = false;

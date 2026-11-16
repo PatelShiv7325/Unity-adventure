@@ -88,7 +88,7 @@ export default function JoyRides() {
 
             <div className="jr-session">
               <h4 className="jr-session-heading jr-session-morning">Morning Session:</h4>
-              <p className="jr-session-time">6:30 AM &ndash; 12:00 AM</p>
+              <p className="jr-session-time">6:30 AM &ndash; 12:00 PM</p>
               <p className="jr-session-desc">Ideal for calm air conditions, crystal-clear visibility, and stunning morning photography.</p>
             </div>
 

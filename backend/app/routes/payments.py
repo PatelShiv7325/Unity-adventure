@@ -73,7 +73,7 @@ def create_order():
                        amount_rupees=float(booking.amount), currency="INR",
                        booking_id=booking.id, upi_id=upi_id, payee=cfg["UPI_PAYEE_NAME"],
                        transaction_id=ref, upi_uri=uri, qr_data_uri=ps.upi_qr_data_uri(uri),
-                       static_qr="/images/Upi Scanner.jpg")
+                       static_qr="/images/upi-scanner.jpg")
 
     if ps.razorpay_enabled():
         order = ps.create_razorpay_order(booking.amount, f"booking_{booking.id}")
