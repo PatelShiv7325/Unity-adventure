@@ -20,7 +20,7 @@ export default function ActivityDetails() {
       <Scene kind={kind} photo={photo} className="banner banner-tall" banner>
         <div className="banner-inner">
           <h1>{a.title}</h1>
-          <p>{a.location} &middot; {a.duration_minutes} min</p>
+          <p>{a.location}</p>
         </div>
       </Scene>
       <section className="section detail">
@@ -34,7 +34,6 @@ export default function ActivityDetails() {
           <p className="price"><small>from</small> {rupees(a.price)}</p>
           <p className="muted">per person</p>
           <Difficulty level={a.difficulty} />
-          <p className="muted">{a.duration_minutes} minutes in the air or on the trail</p>
           <Link to={`/book/${a.slug}`} className="btn btn-lg">Book now</Link>
         </aside>
       </section>

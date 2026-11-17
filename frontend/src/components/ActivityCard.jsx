@@ -20,7 +20,6 @@ export default function ActivityCard({ activity }) {
     <article className="card">
       <Link to={`/activities/${activity.slug}`} className="card-media" aria-label={`${activity.title} details`}>
         <Scene kind={kind} photo={photo} photoPosition={photoPosition} />
-        <span className="card-time">{activity.duration_minutes} min</span>
       </Link>
       <div className="card-body">
         <h3>{activity.title}</h3>
