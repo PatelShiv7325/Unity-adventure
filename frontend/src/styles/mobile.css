@@ -1,0 +1,111 @@
+/* =====================================================================
+   MOBILE POLISH - imported LAST in main.jsx (after global, responsive, polish)
+   Phones first, then tablets, then desktop.
+   To undo everything, remove the mobile.css import from main.jsx.
+   ===================================================================== */
+
+/* ---------- All touch screens ---------- */
+html { -webkit-tap-highlight-color: transparent; }
+a, button, input, select, textarea, label { touch-action: manipulation; }   /* no double-tap zoom delay */
+body {
+  padding-left: env(safe-area-inset-left, 0px);      /* notch in landscape (needs viewport-fit=cover) */
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* the illustrated backgrounds sit under the photos: do not animate them inside cards (saves battery) */
+.card-media .glide { animation: none; }
+
+/* phones have no hover: stop "stuck" hover effects after a tap */
+@media (hover: none) {
+  .card:hover, .contact-card:hover, .booking-card:hover, .admin-stat-card:hover,
+  .slot:hover:not(:disabled) { transform: none; }
+  .btn:hover:not(:disabled) { transform: none; }
+  .card:hover .card-media .scene-photo { transform: none; }
+}
+
+/* ---------- Tablets (portrait) ---------- */
+@media (min-width: 641px) and (max-width: 940px) {
+  .checkout { max-width: 720px; margin-left: auto; margin-right: auto; }
+}
+
+/* ---------- Ticket popup: works for a tall ticket on any screen ---------- */
+.modal-backdrop { display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.modal { margin: auto; }              /* centres when it fits, scrolls from the top when it does not */
+.modal-wide { width: min(540px, 100%); }
+.ticket-img { max-width: 440px; margin: 0 auto; }
+
+/* ---------- Ride details: price + Book button first on small screens ---------- */
+@media (max-width: 1024px) {
+  .detail > .detail-side-book { order: -1; }
+}
+
+/* ---------- Booking page: form first, total + button last ---------- */
+@media (max-width: 940px) {
+  .checkout .summary.summary-booking { order: 2; }
+}
+
+/* ---------- Phones ---------- */
+@media (max-width: 640px) {
+  html { font-size: 100%; }            /* 16px base: readable, and stops iPhone zooming into fields */
+  body { line-height: 1.5; }
+  .glide { animation: none; }
+
+  .hero { min-height: min(600px, 85vh); }
+  @supports (height: 100svh) {
+    .hero { min-height: min(600px, 85svh); }   /* correct height even with the phone's address bar */
+  }
+
+  /* bigger, easier targets */
+  .link-quiet, .pw-toggle { min-height: 44px; }
+  .pw-toggle { min-width: 56px; }
+  .footer-col a { padding: 6px 0; }
+  .chips { gap: 10px; }
+
+  /* forms: 16px text so iPhone does not zoom when a field is tapped */
+  input, select, textarea,
+  .admin-form input, .admin-form select, .admin-form textarea { font-size: 16px; }
+
+  /* booking */
+  .checkout { gap: 20px; }
+  .panel { padding: 18px 14px; }
+  .form-step { padding-bottom: 18px; margin-bottom: 18px; }
+  .summary-body { padding: 18px 16px 20px; }
+
+  /* payment: the "Open UPI app" button first, QR below it (a phone cannot scan its own screen) */
+  .qr-box { display: flex; flex-direction: column-reverse; align-items: center; gap: 16px; padding: 16px; }
+  .qr-side { width: 100%; justify-items: stretch; text-align: center; }
+  .qr-side .copy-chip { justify-content: center; width: 100%; }
+  .qr-side a.btn { width: 100%; background: var(--canopy); border-color: var(--canopy); color: var(--night); padding: 14px; font-size: 1.05rem; }
+  .qr-code { width: 200px; }
+  .hold-timer { position: sticky; top: 8px; z-index: 5; box-shadow: var(--shadow-sm); }
+
+  /* ticket popup */
+  .modal-backdrop { padding: 10px; }
+  .modal { padding: 20px 14px; border-radius: 16px; }
+  .modal-actions .btn { flex: 1; }
+  .modal-title { font-size: 1.5rem; }
+
+  /* messages stay inside the screen and above the home bar */
+  .toasts { left: 12px; right: 12px; max-width: none; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .footer-base { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+
+  /* admin on a phone */
+  .subnav { flex-wrap: nowrap; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; gap: 16px; }
+  .subnav a { flex: 0 0 auto; padding: 12px 4px; }
+  .admin-toolbar { flex-direction: column; align-items: stretch; }
+  .admin-search { max-width: none; width: 100%; }
+  .table-scroll { -webkit-overflow-scrolling: touch; }
+}
+
+/* ---------- Small phones: two time slots per row ---------- */
+@media (max-width: 480px) {
+  .slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .slot { min-width: 0; width: 100%; }
+}
+
+/* ---------- Phones turned sideways ---------- */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hero-inner { padding: 32px 24px; }
+  .hero h1 { font-size: clamp(2.2rem, 7vw, 4rem); }
+  .banner { min-height: 200px; }
+}

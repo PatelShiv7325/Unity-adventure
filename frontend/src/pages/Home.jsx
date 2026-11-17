@@ -12,6 +12,7 @@ import { CardSkeletons } from "../components/Skeleton.jsx";
 export default function Home() {
   const [activities, setActivities] = useState(() => readCachedActivities());
   const [loadError, setLoadError] = useState(false);
+  const saveData = typeof navigator !== "undefined" && navigator.connection?.saveData;
   useEffect(() => {
     getActivities().then(setActivities).catch(() => setActivities((cur) => { if (!cur) setLoadError(true); return cur; }));
   }, []);
@@ -19,7 +20,9 @@ export default function Home() {
   return (
     <>
       <section className="hero hero-video">
-        <video className="hero-video-bg" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" preload="metadata" autoPlay muted loop playsInline />
+        {saveData
+          ? <img className="hero-video-bg" src="/images/hero-poster.jpg" alt="" />
+          : <video className="hero-video-bg" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" preload="metadata" autoPlay muted loop playsInline />}
         <div className="hero-video-shade" aria-hidden="true" />
         <div className="hero-inner">
           <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>

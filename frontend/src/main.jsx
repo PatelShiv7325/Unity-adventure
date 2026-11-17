@@ -8,6 +8,7 @@ import { prefetchActivities } from "./api/activities";
 import "./styles/global.css";
 import "./styles/responsive.css";
 import "./styles/polish.css";
+import "./styles/mobile.css";
 
 // start loading the rides (and wake the server) before the page even finishes drawing
 prefetchActivities();

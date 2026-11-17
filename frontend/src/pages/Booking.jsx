@@ -189,7 +189,7 @@ export default function Booking() {
           </div>
         </div>
 
-        <aside className="summary">
+        <aside className="summary summary-booking">
           <div className="summary-media">
             <Scene kind={kind} photo={photo} photoPosition={photoPosition} />
           </div>

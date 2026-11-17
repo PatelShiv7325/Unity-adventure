@@ -30,7 +30,7 @@ export default function ActivityDetails() {
           <h2>Safety</h2>
           <p>{a.safety_notes}</p>
         </div>
-        <aside className="detail-side">
+        <aside className="detail-side detail-side-book">
           <p className="price"><small>from</small> {rupees(a.price)}</p>
           <p className="muted">per person</p>
           <Difficulty level={a.difficulty} />
